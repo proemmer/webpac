@@ -7,6 +7,7 @@ using Microsoft.AspNet.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using webpac.Services;
 
 namespace webpac
 {
@@ -28,13 +29,17 @@ namespace webpac
         {
             // Add framework services.
             services.AddMvc();
+            services.Add(new ServiceDescriptor(typeof(IMappingService), typeof(MappingService), ServiceLifetime.Singleton));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IMappingService mappingService)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            mappingService.Configure(Configuration.GetSection("Plc"));
+            mappingService.OpenConnection();
 
             app.UseIISPlatformHandler();
 
