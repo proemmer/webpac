@@ -5,62 +5,114 @@ using Papper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using webpac.Interfaces;
 
 namespace webpac.Services
 {
-    public interface IMappingService
-    {
-        void Configure(IConfigurationSection config);
-        void OpenConnection();
-        void CloseConnection();
-        IEnumerable<string> GetSymbolicBlocks();
-        IEnumerable<string> GetDataBlocks();
-        IEnumerable<string> GetSymbols();
-        Dictionary<string, object> Read(string mapping, params string[] vars);
-        bool Write(string mapping, Dictionary<string, object> values);
-    }
-
-
     public class MappingService : IMappingService
     {
         #region Fields
-        private InacS7CoreClient _client;
+        private ReaderWriterLockSlim _connectionLock = new ReaderWriterLockSlim();
+        private InacS7CoreClient _client = new InacS7CoreClient();
         private static PlcDataMapper _papper;
         private string _connectionString = string.Empty;
+        private bool _disposed; // to detect redundant calls
+        private bool _connectOnStartup;
         #endregion
 
         ~MappingService()
         {
-            CloseConnection();
+            Dispose(false);
         }
 
+        #region IService Interface
         public void Configure(IConfigurationSection config)
         {
             _connectionString = config.Get<string>("ConnectionString");
+            _connectOnStartup = config.Get<bool>("ConnectOnStartup");
         }
 
-        public void OpenConnection()
+        public void Init()
         {
-            if (_client != null)
-                CloseConnection();
-            else
-                _client = new InacS7CoreClient();
-            _client.Connect(_connectionString);
+            if(_connectOnStartup)
+                OpenConnection();
+        }
 
-            if(_client.IsConnected)
+        public void Release()
+        {
+            CloseConnection();
+        }
+        #endregion
+
+        #region IDispasble Implementation
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
             {
-                var pduSize = _client.PduSize;
-                _papper = new PlcDataMapper(pduSize);
-                _papper.OnRead += OnRead;
-                _papper.OnWrite += OnWrite;
+                if (disposing)
+                {
+                    // Dispose managed resources.
+                    if (_client != null)
+                    {
+                        _client.Disconnect();
+                        _client = null;
+                    }
+
+                    if (_connectionLock != null)
+                    {
+                        _connectionLock.Dispose();
+                        _connectionLock = null;
+                    }
+                }
+
+                // There are no unmanaged resources to release, but
+                // if we add them, they need to be released here.
+            }
+            _disposed = true;
+
+            // If it is available, make the call to the
+            // base class's Dispose(Boolean) method
+            // base.Dispose(disposing);
+        }
+        #endregion
+
+        private void OpenConnection()
+        {
+            _connectionLock.EnterWriteLock();
+            try
+            {
+                _client.Connect(_connectionString);
+                if (_client.IsConnected && (_papper == null /*&& _papper.PduSize > _client.PduSize*/)) //TODO
+                {
+                    var pduSize = _client.PduSize;
+                    _papper = new PlcDataMapper(pduSize);
+                    _papper.OnRead += OnRead;
+                    _papper.OnWrite += OnWrite;
+                }
+            }
+            finally
+            {
+                _connectionLock.ExitWriteLock();
             }
         }
 
-        public void CloseConnection()
+        private void CloseConnection()
         {
-            if(_client != null)
+            _connectionLock.EnterWriteLock();
+            try
             {
                 _client.Disconnect();
+            }
+            finally
+            {
+                _connectionLock.ExitWriteLock();
             }
         }
 
@@ -148,6 +200,25 @@ namespace webpac.Services
                     throw new ArgumentException($"Invalid selector {selector} given! Could not pars block number");
             }
             return new Tuple<PlcArea, int>(area, blockNumber);
+        }
+
+        private bool EnsureConnection()
+        {
+            _connectionLock.EnterUpgradeableReadLock();
+            try
+            {
+                if (!_client.IsConnected)
+                {
+                    OpenConnection();
+                    if (!_client.IsConnected)
+                        throw new PlcConnectionException();
+                }
+                return _papper != null && _client.IsConnected;
+            }
+            finally
+            {
+                _connectionLock.ExitUpgradeableReadLock();
+            }
         }
 
         #endregion

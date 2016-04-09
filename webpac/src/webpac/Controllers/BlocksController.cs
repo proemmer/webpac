@@ -4,11 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using webpac.Services;
+using Microsoft.Extensions.Logging;
+using webpac.Interfaces;
+using Microsoft.AspNet.Authorization;
 
 namespace webpac.Controllers
 {
     [Route("api/[controller]")]
-    public class BlocksController : Controller
+    public class BlocksController : BaseController
     {
         [FromServices]
         public IMappingService MappingService { get; set; }
@@ -20,8 +23,10 @@ namespace webpac.Controllers
         /// <returns></returns>
         // GET: api/values
         [HttpGet]
+        [Authorize(Policy = "ReadOnlyPolicy")]
         public IEnumerable<string> Get()
         {
+            Logger.LogInformation("Test");
             return MappingService.GetSymbolicBlocks();
         }
 
@@ -33,6 +38,7 @@ namespace webpac.Controllers
         /// <returns></returns>
         // GET api/values/5
         [HttpGet("{id}/{variable}")]
+        [Authorize(Policy = "ReadOnlyPolicy")]
         public Dictionary<string,object> Get(string id, string variable = "")
         {
             return MappingService.Read(id, variable.Split(new []{ "," },StringSplitOptions.RemoveEmptyEntries));
@@ -44,6 +50,7 @@ namespace webpac.Controllers
         /// <param name="value"></param>
         // POST api/values
         [HttpPost]
+        [Authorize(Policy = "AdministrationPolicy")]
         public void Post([FromBody]string value)
         {
         }
@@ -55,6 +62,7 @@ namespace webpac.Controllers
         /// <param name="value"></param>
         // PUT api/values/5
         [HttpPut("{id}")]
+        [Authorize(Policy = "ReadWritePolicy")]
         public void Put(string id, [FromBody]Dictionary<string,object> value)
         {
             MappingService.Write(id, value);
@@ -66,6 +74,7 @@ namespace webpac.Controllers
         /// <param name="id"></param>
         // DELETE api/values/5
         [HttpDelete("{id}")]
+        [Authorize(Policy = "AdministrationPolicy")]
         public void Delete(int id)
         {
         }

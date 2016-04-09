@@ -4,13 +4,34 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using webpac.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace webpac.Services
 {
-    public class RuntimeCompilerService
+    public class RuntimeCompilerService : IRuntimeCompilerService
     {
-        private Dictionary<string,Assembly> 
+        //private Dictionary<string,Assembly> 
         private readonly IEnumerable<MetadataReference> _references;
+
+
+
+        #region IService Interface
+        public void Configure(IConfigurationSection config)
+        {
+            //Read references
+        }
+
+        public void Init()
+        {
+            //Add references
+        }
+
+        public void Release()
+        {
+            //Release all
+        }
+        #endregion
 
 
         public RuntimeCompilerService(IEnumerable<MetadataReference> references)
@@ -56,7 +77,11 @@ namespace webpac.Services
             //        }
             //    }
             //}
+            return null;
         }
 
+
     }
+
+
 }

@@ -1,11 +1,15 @@
 {
-  "version": "1.0.0-*",
+  "commands": {
+    "web": "Microsoft.AspNet.Server.Kestrel"
+  },
   "compilationOptions": {
     "emitEntryPoint": true
   },
-
   "dependencies": {
     "InacS7Core": "1.0.1-beta",
+    "Microsoft.AspNet.Authentication": "1.0.0-rc1-final",
+    "Microsoft.AspNet.Authentication.JwtBearer": "1.0.0-rc1-final",
+    "Microsoft.AspNet.Authentication.OAuthBearer": "1.0.0-beta7",
     "Microsoft.AspNet.IISPlatformHandler": "1.0.0-rc1-final",
     "Microsoft.AspNet.Mvc": "6.0.0-rc1-final",
     "Microsoft.AspNet.Server.Kestrel": "1.0.0-rc1-final",
@@ -16,13 +20,13 @@
     "Microsoft.Extensions.Logging": "1.0.0-rc1-final",
     "Microsoft.Extensions.Logging.Console": "1.0.0-rc1-final",
     "Microsoft.Extensions.Logging.Debug": "1.0.0-rc1-final",
-    "Papper": "1.0.1-beta"
+    "Papper": "1.0.1-beta",
+    "System.IdentityModel.Tokens": "5.0.0-rc1-211161024"
   },
-
-  "commands": {
-    "web": "Microsoft.AspNet.Server.Kestrel"
-  },
-
+  "exclude": [
+    "wwwroot",
+    "node_modules"
+  ],
   "frameworks": {
     "dnxcore50": {
       "dependencies": {
@@ -30,14 +34,10 @@
       }
     }
   },
-
-  "exclude": [
-    "wwwroot",
-    "node_modules"
-  ],
   "publishExclude": [
     "**.user",
     "**.vspscc"
   ],
-  "userSecretsId": "aspnet5-webpac-20160407020344"
+  "userSecretsId": "aspnet5-webpac-20160407020344",
+  "version": "1.0.0-*"
 }
