@@ -1,10 +1,12 @@
-﻿using InacS7Core;
-using InacS7Core.Domain;
+﻿using Dacs7;
+using Dacs7.Domain;
 using Microsoft.Extensions.Configuration;
 using Papper;
+using Papper.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using webpac.Interfaces;
 
@@ -14,7 +16,7 @@ namespace webpac.Services
     {
         #region Fields
         private ReaderWriterLockSlim _connectionLock = new ReaderWriterLockSlim();
-        private InacS7CoreClient _client = new InacS7CoreClient();
+        private Dacs7Client _client = new Dacs7Client();
         private static PlcDataMapper _papper;
         private string _connectionString = string.Empty;
         private bool _disposed; // to detect redundant calls
@@ -95,6 +97,15 @@ namespace webpac.Services
                     _papper = new PlcDataMapper(pduSize);
                     _papper.OnRead += OnRead;
                     _papper.OnWrite += OnWrite;
+
+                    foreach (var type in typeof(MappingService)
+                                         .GetTypeInfo()
+                                         .Assembly
+                                         .GetTypes()
+                                         .Where(type => type.GetTypeInfo().GetCustomAttribute<MappingAttribute>() != null))
+                    {
+                            _papper.AddMapping(type);
+                    }
                 }
             }
             finally

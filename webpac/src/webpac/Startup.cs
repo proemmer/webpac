@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -9,12 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using webpac.Services;
 using webpac.Filters;
-using Newtonsoft.Json.Serialization;
 using webpac.Interfaces;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
-using System.IO;
 using System.IdentityModel.Tokens;
 using TokenAuthExampleWebApplication;
 using Microsoft.AspNet.Authorization;
@@ -61,48 +54,47 @@ namespace webpac
         {
             //var mvcCore = services.AddMvcCore();
             //mvcCore.AddJsonFormatters(options => options.ContractResolver = new CamelCasePropertyNamesContractResolver());
-            services.AddAuthentication( config =>
+            ConfigureAuthenticationService(services);
+
+            services.AddScoped<ActionLoggerFilter>();
+            services.AddSingleton<IMappingService, MappingService>();
+            services.AddSingleton<IAuthenticationService, AuthenticationService>();
+            AddAuthentication(services);
+
+            // Add framework services.
+            services.AddMvc();
+        }
+
+        private static void ConfigureAuthenticationService(IServiceCollection services)
+        {
+            services.AddAuthentication(config =>
             {
                 config.SignInScheme = JwtBearerDefaults.AuthenticationScheme;
             });
             services.AddAuthorization(options =>
-             {
-                 options.AddPolicy("AdministrationPolicy", policy =>
-                 {
-                     //policy.RequireRole("Admin");
-                     policy.RequireClaim(ClaimTypes.Role, "Admin");
-                     policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-                     //policy.RequireAuthenticatedUser();
-                 });
-                 options.AddPolicy("ReadWritePolicy", policy =>
-                 {
-                     //policy.RequireRole("ReadWrite", "Admin");
-                     policy.RequireClaim(ClaimTypes.Role, "ReadWrite");
-                     policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-                     //policy.RequireAuthenticatedUser();
-                 });
-                 options.AddPolicy("ReadOnlyPolicy", policy =>
-                 {
-                     //policy.RequireRole("ReadOnly", "ReadWrite");
-                     policy.RequireClaim(ClaimTypes.Role, "ReadOnly");
-                     policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-                     //policy.RequireAuthenticatedUser();
-                 });
-
-
-             });
-
-
-
-            services.AddScoped<ActionLoggerFilter>();
-            services.AddSingleton<IMappingService,MappingService>();
-            services.AddSingleton<IRuntimeCompilerService, RuntimeCompilerService>();
-            services.AddSingleton<IAuthenticationService, AuthenticationService>();
-            AddAuthentication(services);
-
-
-            // Add framework services.
-            services.AddMvc();
+            {
+                options.AddPolicy("AdministrationPolicy", policy =>
+                {
+                    //policy.RequireRole("Admin");
+                    policy.RequireClaim(ClaimTypes.Role, "Admin");
+                    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+                    //policy.RequireAuthenticatedUser();
+                });
+                options.AddPolicy("ReadWritePolicy", policy =>
+                {
+                    //policy.RequireRole("ReadWrite", "Admin");
+                    policy.RequireClaim(ClaimTypes.Role, "ReadWrite");
+                    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+                    //policy.RequireAuthenticatedUser();
+                });
+                options.AddPolicy("ReadOnlyPolicy", policy =>
+                {
+                    //policy.RequireRole("ReadOnly", "ReadWrite");
+                    policy.RequireClaim(ClaimTypes.Role, "ReadOnly");
+                    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+                    //policy.RequireAuthenticatedUser();
+                });
+            });
         }
 
 
@@ -111,7 +103,6 @@ namespace webpac
                                 IHostingEnvironment env,
                                 ILoggerFactory loggerFactory,
                                 IMappingService mappingService,
-                                IRuntimeCompilerService runtimeCompilerService,
                                 IAuthenticationService authService)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
@@ -119,9 +110,6 @@ namespace webpac
 
             mappingService.Configure(Configuration.GetSection("Plc"));
             mappingService.Init();
-
-            runtimeCompilerService.Configure(Configuration.GetSection("Compiler"));
-            runtimeCompilerService.Init();
 
             authService.Configure(Configuration.GetSection("Auth"));
             authService.Init();

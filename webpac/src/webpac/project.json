@@ -6,7 +6,7 @@
     "emitEntryPoint": true
   },
   "dependencies": {
-    "InacS7Core": "1.0.1-beta",
+    "Dacs7": "1.0.1-beta",
     "Microsoft.AspNet.Authentication": "1.0.0-rc1-final",
     "Microsoft.AspNet.Authentication.JwtBearer": "1.0.0-rc1-final",
     "Microsoft.AspNet.Authentication.OAuthBearer": "1.0.0-beta7",
@@ -30,7 +30,6 @@
   "frameworks": {
     "dnxcore50": {
       "dependencies": {
-        "InacS7Core": "1.0.0"
       }
     }
   },
