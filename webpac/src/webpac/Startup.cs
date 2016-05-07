@@ -58,6 +58,7 @@ namespace webpac
 
             services.AddScoped<ActionLoggerFilter>();
             services.AddSingleton<IMappingService, MappingService>();
+            services.AddSingleton<IRuntimeCompilerService, RuntimeCompilerService>();
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             AddAuthentication(services);
 
@@ -103,6 +104,7 @@ namespace webpac
                                 IHostingEnvironment env,
                                 ILoggerFactory loggerFactory,
                                 IMappingService mappingService,
+                                IRuntimeCompilerService runtimeCompilerService,
                                 IAuthenticationService authService)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
@@ -110,6 +112,10 @@ namespace webpac
 
             mappingService.Configure(Configuration.GetSection("Plc"));
             mappingService.Init();
+
+            runtimeCompilerService.Configure(Configuration.GetSection("RuntimeCompiler"));
+            runtimeCompilerService.Init();
+
 
             authService.Configure(Configuration.GetSection("Auth"));
             authService.Init();
