@@ -21,7 +21,14 @@ namespace webpac.Services
         private string _connectionString = string.Empty;
         private bool _disposed; // to detect redundant calls
         private bool _connectOnStartup;
+        private IRuntimeCompilerService _rumtimeCompiler;
         #endregion
+
+
+        public MappingService(IRuntimeCompilerService rumtimeCompiler)
+        {
+            _rumtimeCompiler = rumtimeCompiler;
+        }
 
         ~MappingService()
         {
@@ -91,18 +98,16 @@ namespace webpac.Services
             try
             {
                 _client.Connect(_connectionString);
-                if (_client.IsConnected && (_papper == null /*&& _papper.PduSize > _client.PduSize*/)) //TODO
+                if (_client.IsConnected && (_papper == null /*|| _papper.PduSize > _client.PduSize*/)) //TODO
                 {
                     var pduSize = _client.PduSize;
                     _papper = new PlcDataMapper(pduSize);
                     _papper.OnRead += OnRead;
                     _papper.OnWrite += OnWrite;
 
-                    foreach (var type in typeof(MappingService)
-                                         .GetTypeInfo()
-                                         .Assembly
-                                         .GetTypes()
-                                         .Where(type => type.GetTypeInfo().GetCustomAttribute<MappingAttribute>() != null))
+                    foreach (var type in _rumtimeCompiler.GetTypes()
+                                         .Where(type => type.GetTypeInfo()
+                                                            .GetCustomAttribute<MappingAttribute>() != null))
                     {
                             _papper.AddMapping(type);
                     }
@@ -127,38 +132,75 @@ namespace webpac.Services
             }
         }
 
+        /// <summary>
+        /// This Method returns all registered (added to papper) block names.
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<string> GetSymbolicBlocks()
         {
-            //return _papper.Mappings;
-            throw new NotImplementedException();
+            return _papper?.Mappings ?? new List<string>();
         }
 
+        /// <summary>
+        /// This method starts a request to the plc to get information of the loaded data blocks
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<string> GetDataBlocks()
         {
             return _client.GetBlocksOfType(PlcBlockType.Db).Select( bi => $"DB{bi.Number}");
         }
 
+        /// <summary>
+        /// This method returns all Symbols (e.g. M, E , A ,T ,..) which are registered
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<string> GetSymbols()
         {
-            //return _papper.GetVariablesOf("Symbols");
-            throw new NotImplementedException();
+            return _papper.GetVariablesOf("Symbols");
         }
 
-        public string GetAddresses(string mapping, params string[] varaible)
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="mapping"></param>
+        /// <param name="varibles"></param>
+        /// <returns></returns>
+        public Dictionary<string,string> GetAddresses(string mapping, params string[] varibles)
+        {
+            //TODO resolve correct
+            var kvp = new Dictionary<string, string>();
+            foreach (var variable in varibles)
+            {
+                var address = _papper.GetAddressOf(mapping,variable);
+                var bitOffset = address.Item2.Bits > -1 ? address.Item2.Bits : 0;
+                var bitSize = address.Item3.Bits > -1 ? address.Item3.Bits : 0;
+                kvp.Add(variable, $"{address.Item1},{address.Item2.Bytes}.{bitOffset},{address.Item3.Bytes}.{bitSize}");
+            }
+            return kvp;
+        }
+
+        public object ReadFromAddress(string address)
         {
             throw new NotImplementedException();
         }
 
-        public object ReadAddress(string address)
-        {
-            throw new NotImplementedException();
-        }
-
+        /// <summary>
+        /// Read the given variables from the plc
+        /// </summary>
+        /// <param name="mapping"></param>
+        /// <param name="vars"></param>
+        /// <returns></returns>
         public Dictionary<string,object> Read(string mapping, params string[] vars)
         {
             return _papper.Read(mapping, vars);
         }
 
+        /// <summary>
+        /// Write the given values to the plc
+        /// </summary>
+        /// <param name="mapping"></param>
+        /// <param name="values"></param>
+        /// <returns></returns>
         public bool Write(string mapping, Dictionary<string, object> values)
         {
             return _papper.Write(mapping, values);

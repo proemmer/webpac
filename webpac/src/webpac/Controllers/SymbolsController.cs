@@ -10,7 +10,6 @@ using webpac.Services;
 
 namespace webpac.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     public class SymbolsController : BaseController
     {
@@ -24,7 +23,7 @@ namespace webpac.Controllers
         /// <returns></returns>
         // GET: api/values
         [HttpGet]
-        [Authorize(Roles = "ReadOnlyPolicy")]
+        [Authorize(Policy = "ReadOnlyPolicy")]
         public IEnumerable<string> Get()
         {
             return new string[] { "value1", "value2" };
@@ -38,7 +37,7 @@ namespace webpac.Controllers
         /// <returns></returns>
         // GET api/values/5
         [HttpGet("{id}")]
-        [Authorize(Roles = "ReadOnlyPolicy")]
+        [Authorize(Policy = "ReadOnlyPolicy")]
         public string Get(int id)
         {
 
@@ -51,7 +50,7 @@ namespace webpac.Controllers
         /// <param name="value"></param>
         // POST api/values
         [HttpPost]
-        [Authorize(Roles = "AdministrationPolicy")]
+        [Authorize(Policy = "AdministrationPolicy")]
         public void Post([FromBody]string value)
         {
         }
@@ -63,7 +62,7 @@ namespace webpac.Controllers
         /// <param name="value"></param>
         // PUT api/values/5
         [HttpPut("{id}")]
-        [Authorize(Roles = "ReadWritePolicy")]
+        [Authorize(Policy = "ReadWritePolicy")]
         public void Put(int id, [FromBody]string value)
         {
         }
@@ -74,7 +73,7 @@ namespace webpac.Controllers
         /// <param name="id"></param>
         // DELETE api/values/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "AdministrationPolicy")]
+        [Authorize(Policy = "AdministrationPolicy")]
         public void Delete(int id)
         {
         }

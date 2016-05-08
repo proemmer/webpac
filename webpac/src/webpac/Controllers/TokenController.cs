@@ -42,7 +42,7 @@ namespace webpac.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Authorize("Bearer")]
+        [Authorize("AdministrationPolicy")]
         public dynamic Get()
         {
             /* 

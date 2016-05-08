@@ -1,22 +1,3 @@
-
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-
-using System.Threading;
-using System.Threading.Tasks;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Dynamic;
-
-
-using PlcDriver.Attributes;
-using ScriptDriver.Attributes;
-
-
 namespace Insite.Customer.Data.DB_DATA_RF_BST1_VST
 {
     

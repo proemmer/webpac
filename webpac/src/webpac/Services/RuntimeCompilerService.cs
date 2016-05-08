@@ -30,6 +30,7 @@ namespace webpac.Services
         private readonly ICompilerOptionsProvider _compilerOptionsProvider;
         private readonly IAssemblyLoadContext _context;
         private readonly CSharpCompilationOptions _compilationOptions;
+        private string[] _usings;
         private string _location;
         private readonly ConcurrentDictionary<string, AssemblyMetadata> _metadataFileCache =new ConcurrentDictionary<string, AssemblyMetadata>(StringComparer.OrdinalIgnoreCase);
 
@@ -40,6 +41,7 @@ namespace webpac.Services
         public void Configure(IConfigurationSection config)
         {
             _location = config.Get<string>("Location");
+            _usings = config.Get<string[]>("Usings");
         }
 
         public void Init()
@@ -73,8 +75,16 @@ namespace webpac.Services
                                                     .WithOutputKind(OutputKind.DynamicallyLinkedLibrary);
         }
 
+        public IEnumerable<Type> GetTypes()
+        {
+            return _resolvedTypes.ToList();
+        }
+
+
+
         private void CompileFiles()
         {
+            var codes = new List<string>();
             foreach (var item in Directory.GetFiles(_location, "*.cs"))
             {
                 try
@@ -82,9 +92,7 @@ namespace webpac.Services
                     var code = File.ReadAllText(item, Encoding.UTF8);
                     if (!string.IsNullOrWhiteSpace(code))
                     {
-                        var asm = Compile(Path.GetFileNameWithoutExtension(item), code);
-                        if (asm != null)
-                            _resolvedTypes.AddRange(asm.GetExportedTypes());
+                        codes.Add(code);
                     }
                 }
                 catch (Exception ex)
@@ -92,20 +100,40 @@ namespace webpac.Services
                     //Todo Handle Ex
                 }
             }
+
+            if (codes.Any())
+            {
+                var asm = Compile("Mappings", codes);
+                if (asm != null)
+                    _resolvedTypes.AddRange(asm.GetExportedTypes());
+            }
         }
 
-        private Assembly Compile(string name, string code)
+        private Assembly Compile(string name, List<string> codes)
         {
-            if (code == null)
+            if (codes == null)
                 throw new ArgumentNullException("code");
 
-            // Parse the script to a SyntaxTree
-            var syntaxTree = CSharpSyntaxTree.ParseText(code);
+            var trees = new List<SyntaxTree>();
+
+            foreach (var code in codes)
+            {
+                // Parse the script to a SyntaxTree
+                var syntaxTree = CSharpSyntaxTree.ParseText(code);
+                var root = (CompilationUnitSyntax)syntaxTree.GetRoot();
+
+                if (_usings.Any())
+                {
+                    root = root.AddUsings(_usings.Select(s => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(s))).ToArray());
+                }
+                trees.Add(SyntaxFactory.SyntaxTree(root));
+            }
+
 
             // Compile the SyntaxTree to an in memory assembly
             var compilation = CSharpCompilation.Create(
                 name,
-                new[] { syntaxTree },
+                trees,
                 _references,
                 _compilationOptions
                 );
@@ -180,6 +208,7 @@ namespace webpac.Services
 
             }
         }
+
 
     }
 

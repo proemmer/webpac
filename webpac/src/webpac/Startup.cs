@@ -13,11 +13,11 @@ using TokenAuthExampleWebApplication;
 using Microsoft.AspNet.Authorization;
 using Microsoft.AspNet.Authentication.JwtBearer;
 using System.Security.Claims;
+using Swashbuckle.SwaggerGen;
+using webpac.Swagger;
 
 namespace webpac
 {
-
-
     /// <summary>
     /// http://benfoster.io/blog/generating-hypermedia-links-in-aspnet-web-api
     /// http://www.codeproject.com/Articles/1005145/DNVM-DNX-and-DNU-Understanding-the-ASP-NET-Runtime
@@ -41,9 +41,6 @@ namespace webpac
 
         public IConfigurationRoot Configuration { get; set; }
 
-
-
-
         /// <summary>
         /// AddMvcCore: https://manuel-rauber.com/2016/02/15/back-to-the-roots-creating-thin-webapis-using-the-core-of-aspnet-core/
         /// https://github.com/aspnet-contrib/AspNet.Security.OpenIdConnect.Samples/blob/master/samples/Mvc/Mvc.Server/Startup.cs
@@ -52,50 +49,30 @@ namespace webpac
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSwaggerGen();
+            services.ConfigureSwaggerDocument(options =>
+            {
+                options.SingleApiVersion(new Info
+                {
+                    Version = "v1",
+                    Title = "webpac",
+                    Description = "a api to structured access plcs"
+                });
+                options.OperationFilter(new AuthorizationHeaderParameterOperationFilter());
+            });
+
             //var mvcCore = services.AddMvcCore();
             //mvcCore.AddJsonFormatters(options => options.ContractResolver = new CamelCasePropertyNamesContractResolver());
-            ConfigureAuthenticationService(services);
+            //ConfigureAuthenticationService(services);
 
             services.AddScoped<ActionLoggerFilter>();
-            services.AddSingleton<IMappingService, MappingService>();
             services.AddSingleton<IRuntimeCompilerService, RuntimeCompilerService>();
+            services.AddSingleton<IMappingService, MappingService>();
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             AddAuthentication(services);
 
             // Add framework services.
             services.AddMvc();
-        }
-
-        private static void ConfigureAuthenticationService(IServiceCollection services)
-        {
-            services.AddAuthentication(config =>
-            {
-                config.SignInScheme = JwtBearerDefaults.AuthenticationScheme;
-            });
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("AdministrationPolicy", policy =>
-                {
-                    //policy.RequireRole("Admin");
-                    policy.RequireClaim(ClaimTypes.Role, "Admin");
-                    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-                    //policy.RequireAuthenticatedUser();
-                });
-                options.AddPolicy("ReadWritePolicy", policy =>
-                {
-                    //policy.RequireRole("ReadWrite", "Admin");
-                    policy.RequireClaim(ClaimTypes.Role, "ReadWrite");
-                    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-                    //policy.RequireAuthenticatedUser();
-                });
-                options.AddPolicy("ReadOnlyPolicy", policy =>
-                {
-                    //policy.RequireRole("ReadOnly", "ReadWrite");
-                    policy.RequireClaim(ClaimTypes.Role, "ReadOnly");
-                    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-                    //policy.RequireAuthenticatedUser();
-                });
-            });
         }
 
 
@@ -110,15 +87,16 @@ namespace webpac
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            mappingService.Configure(Configuration.GetSection("Plc"));
-            mappingService.Init();
-
             runtimeCompilerService.Configure(Configuration.GetSection("RuntimeCompiler"));
             runtimeCompilerService.Init();
 
+            mappingService.Configure(Configuration.GetSection("Plc"));
+            mappingService.Init();
 
             authService.Configure(Configuration.GetSection("Auth"));
             authService.Init();
+
+
             //app.UseIISPlatformHandler();
 
             //app.UseStaticFiles();
@@ -138,10 +116,14 @@ namespace webpac
 
                 // This defines the maximum allowable clock skew - i.e. provides a tolerance on the token expiry time 
                 // when validating the lifetime. As we're creating the tokens locally and validating them on the same 
-                // machines which should have synchronised time, this can be set to zero. Where external tokens are
+                // machines which should have synchronized time, this can be set to zero. Where external tokens are
                 // used, some leeway here could be useful.
                 options.TokenValidationParameters.ClockSkew = TimeSpan.FromMinutes(0);
             });
+
+
+            app.UseSwaggerGen();
+            app.UseSwaggerUi();
 
             //is required to use controllers
             app.UseMvc();
@@ -178,14 +160,42 @@ namespace webpac
             services.AddInstance(tokenOptions);
 
             // Enable the use of an [Authorize("Bearer")] attribute on methods and classes to protect.
-            services.AddAuthorization(auth =>
-            {
-                auth.AddPolicy("Bearer", new AuthorizationPolicyBuilder()
-                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme‌​)
-                    .RequireAuthenticatedUser().Build());
-            });
+            //services.AddAuthorization(auth =>
+            //{
+            //    auth.AddPolicy("Bearer", new AuthorizationPolicyBuilder()
+            //        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme‌​)
+            //        .RequireAuthenticatedUser().Build());
+            //});
+            ConfigureAuthenticationService(services);
         }
 
+        private static void ConfigureAuthenticationService(IServiceCollection services)
+        {
+            services.AddAuthentication(config =>
+            {
+                config.SignInScheme = JwtBearerDefaults.AuthenticationScheme;
+            });
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdministrationPolicy", new AuthorizationPolicyBuilder()
+                    .RequireClaim(ClaimTypes.Role, "Admin")
+                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme‌​)
+                    .RequireAuthenticatedUser()
+                    .Build());
+
+                options.AddPolicy("ReadWritePolicy", new AuthorizationPolicyBuilder()
+                    .RequireClaim(ClaimTypes.Role, "ReadWrite", "Admin")
+                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme‌​)
+                    .RequireAuthenticatedUser()
+                    .Build());
+
+                options.AddPolicy("ReadOnlyPolicy", new AuthorizationPolicyBuilder()
+                    .RequireClaim(ClaimTypes.Role, "ReadOnly", "ReadWrite", "Admin")
+                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme‌​)
+                    .RequireAuthenticatedUser()
+                    .Build());
+            });
+        }
 
     }
 }

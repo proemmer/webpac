@@ -26,7 +26,6 @@ namespace webpac.Controllers
         [Authorize(Policy = "ReadOnlyPolicy")]
         public IEnumerable<string> Get()
         {
-            Logger.LogInformation("Test");
             return MappingService.GetSymbolicBlocks();
         }
 
@@ -41,7 +40,9 @@ namespace webpac.Controllers
         [Authorize(Policy = "ReadOnlyPolicy")]
         public Dictionary<string,object> Get(string id, string variable = "")
         {
-            return MappingService.Read(id, variable.Split(new []{ "," },StringSplitOptions.RemoveEmptyEntries));
+            return MappingService.Read(id, string.IsNullOrWhiteSpace(variable) 
+                                            ? new[] { "This" } 
+                                            : variable.Split(new []{ "," },StringSplitOptions.RemoveEmptyEntries));
         }
 
         /// <summary>

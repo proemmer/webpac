@@ -22,7 +22,8 @@
     "Microsoft.Extensions.Logging": "1.0.0-rc1-final",
     "Microsoft.Extensions.Logging.Console": "1.0.0-rc1-final",
     "Microsoft.Extensions.Logging.Debug": "1.0.0-rc1-final",
-    "Papper": "1.0.1-beta",
+    "Papper": "1.0.2-beta",
+    "Swashbuckle": "6.0.0-rc1-final",
     "System.IdentityModel.Tokens": "5.0.0-rc1-211161024"
   },
   "exclude": [
