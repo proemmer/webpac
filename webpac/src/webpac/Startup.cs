@@ -15,8 +15,7 @@ using Microsoft.AspNet.Authentication.JwtBearer;
 using System.Security.Claims;
 using Swashbuckle.SwaggerGen;
 using webpac.Swagger;
-using Microsoft.AspNet.SignalR.Hosting;
-using Microsoft.AspNet.SignalR.Hubs;
+using Microsoft.AspNet.Cors.Infrastructure;
 
 namespace webpac
 {
@@ -51,6 +50,8 @@ namespace webpac
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection services)
         {
+            AddCorse(services);
+
             services.AddSwaggerGen();
             services.ConfigureSwaggerDocument(options =>
             {
@@ -69,9 +70,12 @@ namespace webpac
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             AddAuthentication(services);
 
+            services.AddSignalR();
+
             // Add framework services.
             services.AddMvc();
         }
+
 
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -122,7 +126,10 @@ namespace webpac
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseCors("corsGlobalPolicy");
+
             app.UseSwaggerGen();
+
             app.UseSwaggerUi();
 
             app.UseWelcomePage();
@@ -131,10 +138,10 @@ namespace webpac
 
             //app.UseStaticFiles();
 
-            //app.Map("/signalr", subApp => subApp.UseMiddleware<PersistentConnectionMiddleware>(typeof(HubDispatcher)));
-
             //is required to use controllers
             app.UseMvc();
+
+            app.UseSignalR();
         }
 
 
@@ -200,6 +207,17 @@ namespace webpac
                     .RequireAuthenticatedUser()
                     .Build());
             });
+        }
+
+        private static void AddCorse(IServiceCollection services)
+        {
+            var policy = new CorsPolicy();
+            policy.Headers.Add("*");
+            policy.Methods.Add("*");
+            policy.Origins.Add("*");
+            policy.SupportsCredentials = true;
+
+            services.AddCors(x => x.AddPolicy("corsGlobalPolicy", policy));
         }
 
     }

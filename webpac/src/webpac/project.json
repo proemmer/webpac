@@ -24,7 +24,9 @@
     "Microsoft.Extensions.Logging.Debug": "1.0.0-rc1-final",
     "Papper": "1.0.2-beta",
     "Swashbuckle": "6.0.0-rc1-final",
-    "System.IdentityModel.Tokens": "5.0.0-rc1-211161024"
+    "System.IdentityModel.Tokens": "5.0.0-rc1-211161024",
+    "Microsoft.AspNet.SignalR.Server": "3.0.0-rc1-final",
+    "Microsoft.AspNet.Diagnostics": "1.0.0-rc1-final"
   },
   "exclude": [
     "wwwroot",
