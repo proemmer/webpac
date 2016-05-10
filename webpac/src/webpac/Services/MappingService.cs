@@ -98,7 +98,7 @@ namespace webpac.Services
             try
             {
                 _client.Connect(_connectionString);
-                if (_client.IsConnected && (_papper == null /*|| _papper.PduSize > _client.PduSize*/)) //TODO
+                if (_client.IsConnected && (_papper == null || _papper.PduSize > _client.PduSize)) //TODO
                 {
                     var pduSize = _client.PduSize;
                     _papper = new PlcDataMapper(pduSize);
@@ -172,9 +172,9 @@ namespace webpac.Services
             foreach (var variable in varibles)
             {
                 var address = _papper.GetAddressOf(mapping,variable);
-                var bitOffset = address.Item2.Bits > -1 ? address.Item2.Bits : 0;
-                var bitSize = address.Item3.Bits > -1 ? address.Item3.Bits : 0;
-                kvp.Add(variable, $"{address.Item1},{address.Item2.Bytes}.{bitOffset},{address.Item3.Bytes}.{bitSize}");
+                var bitOffset = address.Offset.Bits > -1 ? address.Offset.Bits : 0;
+                var bitSize = address.Size.Bits > -1 ? address.Size.Bits : 0;
+                kvp.Add(variable, $"{address.Selector},{address.Offset.Bytes}.{bitOffset},{address.Size.Bytes}.{bitSize}");
             }
             return kvp;
         }

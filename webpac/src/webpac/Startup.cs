@@ -15,6 +15,8 @@ using Microsoft.AspNet.Authentication.JwtBearer;
 using System.Security.Claims;
 using Swashbuckle.SwaggerGen;
 using webpac.Swagger;
+using Microsoft.AspNet.SignalR.Hosting;
+using Microsoft.AspNet.SignalR.Hubs;
 
 namespace webpac
 {
@@ -47,7 +49,7 @@ namespace webpac
         /// </summary>
         /// <param name="services"></param>
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection services)
         {
             services.AddSwaggerGen();
             services.ConfigureSwaggerDocument(options =>
@@ -56,14 +58,10 @@ namespace webpac
                 {
                     Version = "v1",
                     Title = "webpac",
-                    Description = "a api to structured access plcs"
+                    Description = "a api to access plc data in a structured way"
                 });
                 options.OperationFilter(new AuthorizationHeaderParameterOperationFilter());
             });
-
-            //var mvcCore = services.AddMvcCore();
-            //mvcCore.AddJsonFormatters(options => options.ContractResolver = new CamelCasePropertyNamesContractResolver());
-            //ConfigureAuthenticationService(services);
 
             services.AddScoped<ActionLoggerFilter>();
             services.AddSingleton<IRuntimeCompilerService, RuntimeCompilerService>();
@@ -82,7 +80,8 @@ namespace webpac
                                 ILoggerFactory loggerFactory,
                                 IMappingService mappingService,
                                 IRuntimeCompilerService runtimeCompilerService,
-                                IAuthenticationService authService)
+                                IAuthenticationService authService
+            )
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
@@ -95,11 +94,6 @@ namespace webpac
 
             authService.Configure(Configuration.GetSection("Auth"));
             authService.Init();
-
-
-            //app.UseIISPlatformHandler();
-
-            //app.UseStaticFiles();
 
             app.UseJwtBearerAuthentication(options =>
             {
@@ -122,12 +116,29 @@ namespace webpac
             });
 
 
+            if (env.IsDevelopment())
+            {
+                app.UseRuntimeInfoPage(); // default path is /runtimeinfo
+                app.UseDeveloperExceptionPage();
+            }
+
             app.UseSwaggerGen();
             app.UseSwaggerUi();
+
+            app.UseWelcomePage();
+
+            //app.UseIISPlatformHandler();
+
+            //app.UseStaticFiles();
+
+            //app.Map("/signalr", subApp => subApp.UseMiddleware<PersistentConnectionMiddleware>(typeof(HubDispatcher)));
 
             //is required to use controllers
             app.UseMvc();
         }
+
+
+
 
         // Entry point for the application.
         public static void Main(string[] args) => WebApplication.Run<Startup>(args);
@@ -159,13 +170,7 @@ namespace webpac
             // controller.
             services.AddInstance(tokenOptions);
 
-            // Enable the use of an [Authorize("Bearer")] attribute on methods and classes to protect.
-            //services.AddAuthorization(auth =>
-            //{
-            //    auth.AddPolicy("Bearer", new AuthorizationPolicyBuilder()
-            //        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme‌​)
-            //        .RequireAuthenticatedUser().Build());
-            //});
+
             ConfigureAuthenticationService(services);
         }
 
