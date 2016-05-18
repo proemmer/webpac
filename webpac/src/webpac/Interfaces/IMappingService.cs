@@ -6,7 +6,6 @@ namespace webpac.Interfaces
 {
     public interface IMappingService : IService, IDisposable
     {
-        IEnumerable<string> GetSymbolicBlocks();
         IEnumerable<string> GetDataBlocks();
         IEnumerable<string> GetSymbols();
         Dictionary<string, object> Read(string mapping, params string[] vars);

@@ -25,7 +25,7 @@ namespace webpac.Controllers
         [Authorize(Policy = "ReadOnlyPolicy")]
         public IEnumerable<string> Get()
         {
-            return new string[] { "value1", "value2" };
+            return MappingService.GetDataBlocks();
         }
 
 
@@ -39,7 +39,7 @@ namespace webpac.Controllers
         [Authorize(Policy = "ReadOnlyPolicy")]
         public string Get(int id)
         {
-            return "value";
+            return MappingService.Read();
         }
 
         /// <summary>

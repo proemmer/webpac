@@ -132,14 +132,6 @@ namespace webpac.Services
             }
         }
 
-        /// <summary>
-        /// This Method returns all registered (added to papper) block names.
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<string> GetSymbolicBlocks()
-        {
-            return _papper?.Mappings ?? new List<string>();
-        }
 
         /// <summary>
         /// This method starts a request to the plc to get information of the loaded data blocks
@@ -156,7 +148,7 @@ namespace webpac.Services
         /// <returns></returns>
         public IEnumerable<string> GetSymbols()
         {
-            return _papper.GetVariablesOf("Symbols");
+            return _papper?.Mappings ?? new List<string>();
         }
 
         /// <summary>

@@ -22,6 +22,7 @@ namespace webpac
     /// <summary>
     /// http://benfoster.io/blog/generating-hypermedia-links-in-aspnet-web-api
     /// http://www.codeproject.com/Articles/1005145/DNVM-DNX-and-DNU-Understanding-the-ASP-NET-Runtime
+    /// https://libraries.io/nuget/Microsoft.AspNet.SignalR.Server/3.0.0-beta5 
     /// </summary>
     public class Startup
     {
@@ -132,7 +133,7 @@ namespace webpac
 
             app.UseSwaggerUi();
 
-            app.UseWelcomePage();
+            //app.UseWelcomePage();
 
             //app.UseIISPlatformHandler();
 
