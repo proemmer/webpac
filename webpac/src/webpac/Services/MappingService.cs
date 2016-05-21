@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Papper;
 using Papper.Attributes;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -22,6 +23,7 @@ namespace webpac.Services
         private bool _disposed; // to detect redundant calls
         private bool _connectOnStartup;
         private IRuntimeCompilerService _rumtimeCompiler;
+        private readonly ConcurrentDictionary<string, object> _subscritions = new ConcurrentDictionary<string, object>();
         #endregion
 
 
@@ -155,13 +157,13 @@ namespace webpac.Services
         /// TODO
         /// </summary>
         /// <param name="mapping"></param>
-        /// <param name="varibles"></param>
+        /// <param name="variables"></param>
         /// <returns></returns>
-        public Dictionary<string,string> GetAddresses(string mapping, params string[] varibles)
+        public Dictionary<string,string> GetAddresses(string mapping, params string[] variables)
         {
             //TODO resolve correct
             var kvp = new Dictionary<string, string>();
-            foreach (var variable in varibles)
+            foreach (var variable in variables)
             {
                 var address = _papper.GetAddressOf(mapping,variable);
                 var bitOffset = address.Offset.Bits > -1 ? address.Offset.Bits : 0;
@@ -196,6 +198,18 @@ namespace webpac.Services
         public bool Write(string mapping, Dictionary<string, object> values)
         {
             return _papper.Write(mapping, values);
+        }
+
+
+        public bool SubscribeChanges(string subscriberId, string mapping, , params string[] vars)
+        {
+            return true;
+        }
+
+
+        public bool UnsubscribeChanges(string subscriberId, string mapping, , params string[] vars)
+        {
+            return true;
         }
 
         #region Helper

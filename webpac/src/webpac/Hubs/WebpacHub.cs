@@ -14,7 +14,6 @@ namespace webpac.Hubs
     [HubName("webpac")]
     public class WebpacHub : Hub
     {
-
         private IMappingService _mappingService;
 
         public WebpacHub(IMappingService mappingService)
@@ -22,23 +21,9 @@ namespace webpac.Hubs
             _mappingService = mappingService;
         }
 
-        public async Task<string> JoinGroup(string connectionId, string groupName)
+        public async Task<bool> Subscribe(string mapping, params string[] variables)
         {
-            await Groups.Add(connectionId, groupName);
-            return connectionId + " joined " + groupName;
         }
-
-        public async Task<string> LeaveGroup(string connectionId, string groupName)
-        {
-            await Groups.Remove(connectionId, groupName);
-            return connectionId + " joined " + groupName;
-        }
-
-
-        //public async Task<bool> Subscribe(string )
-        //{
-
-        //}
 
     }
 }

@@ -205,13 +205,8 @@ namespace webpac.Services
                         _references.Add(CreateMetadataFileReference(rosRef2.Path));
                     }
                 }
-
             }
         }
-
-
     }
-
-
 }
 

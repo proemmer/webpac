@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace webpac.Swagger
 {
+    /// <summary>
+    /// This Filter is an Extension for Swagger, to handle Bearer Token
+    /// </summary>
     public class AuthorizationHeaderParameterOperationFilter : IOperationFilter
     {
         public void Apply(Operation operation, OperationFilterContext context)

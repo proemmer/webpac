@@ -51,8 +51,10 @@ namespace webpac
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection services)
         {
+            //ad corse
             AddCorse(services);
 
+            //add and configure swagger
             services.AddSwaggerGen();
             services.ConfigureSwaggerDocument(options =>
             {
@@ -65,12 +67,16 @@ namespace webpac
                 options.OperationFilter(new AuthorizationHeaderParameterOperationFilter());
             });
 
+            //add filter to log Actions
             services.AddScoped<ActionLoggerFilter>();
+
+            //add the custom services
             services.AddSingleton<IRuntimeCompilerService, RuntimeCompilerService>();
             services.AddSingleton<IMappingService, MappingService>();
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             AddAuthentication(services);
 
+            //add signal r usage
             services.AddSignalR();
 
             // Add framework services.
@@ -119,7 +125,6 @@ namespace webpac
                 // used, some leeway here could be useful.
                 options.TokenValidationParameters.ClockSkew = TimeSpan.FromMinutes(0);
             });
-
 
             if (env.IsDevelopment())
             {
@@ -182,6 +187,10 @@ namespace webpac
             ConfigureAuthenticationService(services);
         }
 
+        /// <summary>
+        /// Add Policies for the authorization and us Bearer for Authentication
+        /// </summary>
+        /// <param name="services"></param>
         private static void ConfigureAuthenticationService(IServiceCollection services)
         {
             services.AddAuthentication(config =>
