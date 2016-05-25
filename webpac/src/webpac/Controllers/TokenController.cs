@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNet.Authorization;
-using Microsoft.AspNet.Http;
-using Microsoft.AspNet.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -14,12 +15,8 @@ namespace webpac.Controllers
     [Route("api/[controller]")]
     public class TokenController : Controller
     {
-        private readonly TokenAuthOptions tokenOptions;
-
-        [FromServices]
-        public IAuthenticationService AuthService { get; set; }
-
-
+        private readonly TokenAuthOptions _tokenOptions;
+        private readonly IAuthenticationService _authService;
 
         public class AuthRequest
         {
@@ -28,9 +25,10 @@ namespace webpac.Controllers
         }
 
 
-        public TokenController(TokenAuthOptions tokenOptions)
+        public TokenController(TokenAuthOptions tokenOptions, IAuthenticationService authService)
         {
-            this.tokenOptions = tokenOptions;
+            _authService = authService;
+            _tokenOptions = tokenOptions;
             //this.bearerOptions = options.Value;
             //this.signingCredentials = signingCredentials;
         }
@@ -98,7 +96,7 @@ namespace webpac.Controllers
         {
             User user = null;
             // Obviously, at this point you need to validate the username and password against whatever system you wish.
-            if (AuthService.TryAuthorize(req.username, req.password, ref user))
+            if (_authService.TryAuthorize(req.username, req.password, ref user))
             {
                 var role = user.Type.ToString();
                 DateTime? expires = DateTime.UtcNow.AddMinutes(20);
@@ -120,10 +118,10 @@ namespace webpac.Controllers
                 new Claim(ClaimTypes.Role,role,ClaimValueTypes.String)
             });
 
-            var securityToken = handler.CreateToken(
-                issuer: tokenOptions.Issuer,
-                audience: tokenOptions.Audience,
-                signingCredentials: tokenOptions.SigningCredentials,
+            var securityToken = handler.CreateJwtSecurityToken(
+                issuer: _tokenOptions.Issuer,
+                audience: _tokenOptions.Audience,
+                signingCredentials: _tokenOptions.SigningCredentials,
                 subject: identity,
                 expires: expires
                 );

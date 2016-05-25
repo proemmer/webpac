@@ -8,14 +8,17 @@ using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Text;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Dnx.Compilation.CSharp;
-using Microsoft.Dnx.Compilation;
-using Microsoft.Extensions.PlatformAbstractions;
 using System.Collections.Concurrent;
 using System.Reflection.PortableExecutable;
-using System.Reflection.Emit;
-using System.Runtime.Loader;
 using System.Reflection;
+using Newtonsoft.Json;
+using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Compilation;
+using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.DependencyModel;
+using System.Runtime.InteropServices;
+using Dacs7.Helper;
+using System.Runtime.Loader;
 
 namespace webpac.Services
 {
@@ -24,11 +27,12 @@ namespace webpac.Services
         //private Dictionary<string,Assembly> 
         private readonly List<MetadataReference> _references = new List<MetadataReference>();
         private readonly List<Type> _resolvedTypes = new List<Type>();
-        private readonly ILibraryExporter _libraryExporter;
-        private readonly ILibraryManager _libraryManager;
-        private readonly IApplicationEnvironment _environment;
-        private readonly ICompilerOptionsProvider _compilerOptionsProvider;
-        private readonly IAssemblyLoadContext _context;
+        //private readonly ILibraryManager _libraryManager;
+        //private readonly ILibraryExporter _libraryExporter;
+        //private readonly IApplicationEnvironment _environment;
+        //private readonly ICompilerOptionsProvider _compilerOptionsProvider;
+        private readonly AssemblyLoadContext _context;
+        private readonly DependencyContext _depContext;
         private readonly CSharpCompilationOptions _compilationOptions;
         private string[] _usings;
         private string _location;
@@ -47,7 +51,7 @@ namespace webpac.Services
         public void Init()
         {
             //Add references
-            DetermineReferences(_environment.ApplicationName);
+            DetermineReferences();
             CompileFiles();
         }
 
@@ -58,21 +62,10 @@ namespace webpac.Services
         #endregion
 
 
-        public RuntimeCompilerService(ILibraryExporter libraryExporter,
-                                      ILibraryManager libraryManager, 
-                                      IApplicationEnvironment environment,
-                                      ICompilerOptionsProvider compilerOptionsProvider)
+        public RuntimeCompilerService()
         {
-            _compilerOptionsProvider = compilerOptionsProvider;
-            _environment = environment;
-            _libraryManager = libraryManager;
-            _libraryExporter = libraryExporter;
-            _context = PlatformServices.Default.AssemblyLoadContextAccessor.Default;
-
-            var compilerOptions = _compilerOptionsProvider.GetCompilerOptions(_environment.ApplicationName, _environment.RuntimeFramework, _environment.Configuration);
-            _compilationOptions = compilerOptions.ToCompilationSettings(_environment.RuntimeFramework, _environment.ApplicationBasePath)
-                                                    .CompilationOptions
-                                                    .WithOutputKind(OutputKind.DynamicallyLinkedLibrary);
+            _context = AssemblyLoadContext.GetLoadContext(Assembly.GetEntryAssembly());
+            _depContext = DependencyContext.Default;
         }
 
         public IEnumerable<Type> GetTypes()
@@ -135,7 +128,7 @@ namespace webpac.Services
                 name,
                 trees,
                 _references,
-                _compilationOptions
+                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                 );
 
             using (var outputStream = new MemoryStream())
@@ -143,7 +136,7 @@ namespace webpac.Services
                 using (var pdbStream = new MemoryStream())
                 {
                     // Emit assembly to streams. Throw an exception if there are any compilation errors
-                    var result = compilation.Emit(outputStream, pdbStream);
+                    var result = compilation.Emit(outputStream /*, pdbStream*/);
 
                     // Populate the _diagnostics property in order to read Errors and Warnings
                     //_Diagnostics = result.Diagnostics;
@@ -151,12 +144,11 @@ namespace webpac.Services
                     if (result.Success)
                     {
                         outputStream.Position = 0;
-                        pdbStream.Position = 0;
-                        return _context.LoadStream(outputStream, pdbStream);
+                        return _context.LoadFromStream(outputStream/*, pdbStream*/);
                     }
                     else
                     {
-                        //TODO
+                        result.Diagnostics.ForEach(x => Console.WriteLine(x.ToString()));
                         return null;
                     }
                 }
@@ -180,32 +172,40 @@ namespace webpac.Services
         }
 
 
-        private void DetermineReferences(string name)
+        private void DetermineReferences()
         {
-            foreach (var reference in _libraryExporter.GetAllExports(name)?.MetadataReferences)
+            foreach (var compilationLibrary in _depContext.CompileLibraries)
             {
-                var rosRef = reference as IMetadataProjectReference;
-                if (rosRef != null)
+                foreach (var item in compilationLibrary.ResolveReferencePaths())
                 {
-                    using (var ms = new MemoryStream())
-                    {
-                        rosRef.EmitReferenceAssembly(ms);
-                        if (ms.Length > 0)
-                        {
-                            ms.Seek(0, SeekOrigin.Begin);
-                            _references.Add(MetadataReference.CreateFromStream(ms));
-                        }
-                    }
-                }
-                else
-                {
-                    var rosRef2 = reference as IMetadataFileReference;
-                    if (rosRef2 != null)
-                    {
-                        _references.Add(CreateMetadataFileReference(rosRef2.Path));
-                    }
+                    _references.Add(MetadataReference.CreateFromFile(item));
                 }
             }
+
+            //foreach (var reference in Assembly.GetEntryAssembly().GetExportedTypes().Select(x => x.)
+            //{
+            //    var rosRef = reference as IMetadataProjectReference;
+            //    if (rosRef != null)
+            //    {
+            //        using (var ms = new MemoryStream())
+            //        {
+            //            rosRef.EmitReferenceAssembly(ms);
+            //            if (ms.Length > 0)
+            //            {
+            //                ms.Seek(0, SeekOrigin.Begin);
+            //                _references.Add(MetadataReference.CreateFromStream(ms));
+            //            }
+            //        }
+            //    }
+            //    else
+            //    {
+            //        var rosRef2 = reference as IMetadataFileReference;
+            //        if (rosRef2 != null)
+            //        {
+            //            _references.Add(CreateMetadataFileReference(rosRef2.Path));
+            //        }
+            //    }
+            //}
         }
     }
 }

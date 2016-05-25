@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNet.SignalR;
-using Microsoft.AspNet.SignalR.Hubs;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Hubs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +23,7 @@ namespace webpac.Hubs
 
         public async Task<bool> Subscribe(string mapping, params string[] variables)
         {
+            return await Task.FromResult(false);
         }
 
     }

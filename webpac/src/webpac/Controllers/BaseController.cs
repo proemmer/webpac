@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNet.Authorization;
-using Microsoft.AspNet.Mvc;
+﻿
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -15,13 +15,18 @@ namespace webpac.Controllers
     public class BaseController
     {
         private ILogger _logger;
-        [FromServices]
-        public ILoggerFactory LoggerFactory { get; set; }
+        private readonly ILoggerFactory _loggerFactory;
+
+        public BaseController(ILoggerFactory loggerFactory)
+        {
+            _loggerFactory = loggerFactory;
+        }
+
         public ILogger Logger
         {
             get
             {
-                return _logger ?? (_logger = LoggerFactory.CreateLogger(GetType().Name));
+                return _logger ?? (_logger = _loggerFactory.CreateLogger(GetType().Name));
             }
         }
     }

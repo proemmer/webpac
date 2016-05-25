@@ -201,13 +201,13 @@ namespace webpac.Services
         }
 
 
-        public bool SubscribeChanges(string subscriberId, string mapping, , params string[] vars)
+        public bool SubscribeChanges(string subscriberId, string mapping, params string[] vars)
         {
             return true;
         }
 
 
-        public bool UnsubscribeChanges(string subscriberId, string mapping, , params string[] vars)
+        public bool UnsubscribeChanges(string subscriberId, string mapping, params string[] vars)
         {
             return true;
         }

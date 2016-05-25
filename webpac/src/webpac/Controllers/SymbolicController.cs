@@ -1,17 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNet.Mvc;
 using webpac.Interfaces;
-using Microsoft.AspNet.Authorization;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace webpac.Controllers
 {
     [Route("api/[controller]")]
     public class SymbolicController : BaseController
     {
-        [FromServices]
+        //[FromServices]
         public IMappingService MappingService { get; set; }
+
+        public SymbolicController(IMappingService mappingService, ILoggerFactory loggerFactory) : base(loggerFactory)
+        {
+            MappingService = mappingService;
+        }
 
         /// <summary>
         /// Get List of blocks
@@ -51,7 +57,7 @@ namespace webpac.Controllers
         //[Authorize(Policy = "ReadOnlyPolicy")]
         public Dictionary<string, object> Get(string id, params string[] variables)
         {
-            return MappingService.Read(id, variables.Any()
+            return MappingService.Read(id, !variables.Any()
                                             ? new[] { "This" }
                                             : variables);
         }

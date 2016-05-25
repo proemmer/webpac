@@ -16,7 +16,7 @@ namespace webpac.Services
 
         public void Configure(IConfigurationSection config)
         {
-            Users = config.Get<List<User>>("Users");
+            Users = config.Get<User[]>("Users");
         }
 
         public void Init()

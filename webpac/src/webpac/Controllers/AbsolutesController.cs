@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNet.Authorization;
-using Microsoft.AspNet.Mvc;
+﻿
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,8 +14,13 @@ namespace webpac.Controllers
     [Route("api/[controller]")]
     public class AbsolutesController : BaseController
     {
-        [FromServices]
+        //[FromServices]
         public IMappingService MappingService { get; set; }
+
+        public AbsolutesController(IMappingService mappingService, ILoggerFactory loggerFactory) : base(loggerFactory)
+        {
+            MappingService = mappingService;
+        }
 
 
         /// <summary>
@@ -37,9 +44,9 @@ namespace webpac.Controllers
         // GET api/values/5
         [HttpGet("{id}")]
         [Authorize(Policy = "ReadOnlyPolicy")]
-        public string Get(int id)
+        public object Get(string id)
         {
-            return MappingService.Read();
+            return MappingService.Read(id,"").Values.FirstOrDefault();
         }
 
         /// <summary>
