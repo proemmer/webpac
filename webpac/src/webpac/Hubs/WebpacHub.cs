@@ -19,11 +19,36 @@ namespace webpac.Hubs
         public WebpacHub(IMappingService mappingService)
         {
             _mappingService = mappingService;
+            _mappingService.DataChanged += _mappingService_DataChanged;
         }
 
-        public async Task<bool> Subscribe(string mapping, params string[] variables)
+        protected override void Dispose(bool disposing)
         {
-            return await Task.FromResult(false);
+            _mappingService.DataChanged -= _mappingService_DataChanged;
+            base.Dispose(disposing);
+        }
+
+        public override Task OnDisconnected(bool stopCalled)
+        {
+            _mappingService.RemoveSubscriptionsForId(Context.ConnectionId);
+            return base.OnDisconnected(stopCalled);
+        }
+
+
+        public bool Subscribe(string mapping, params string[] variables)
+        {
+            return _mappingService.SubscribeChanges(Context.ConnectionId, mapping, variables);
+        }
+
+        public bool Unsubscribe(string mapping, params string[] variables)
+        {
+            return _mappingService.UnsubscribeChanges(Context.ConnectionId, mapping, variables);
+        }
+
+        private void _mappingService_DataChanged(List<SubscriptionInformationPackage> package)
+        {
+            foreach (var item in package)
+                Clients.Clients(item.Subscribers.ToList()).DataChanged(item.Mapping, item.Variable, item.Value);
         }
 
     }

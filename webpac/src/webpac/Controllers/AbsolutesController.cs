@@ -39,26 +39,29 @@ namespace webpac.Controllers
         /// <summary>
         /// Read a Symbol
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="address"></param>
         /// <returns></returns>
         // GET api/values/5
-        [HttpGet("{id}")]
+        [HttpGet("{area}/{address}")]
         [Authorize(Policy = "ReadOnlyPolicy")]
-        public object Get(string id)
+        public object Get(string area, string address)
         {
-            return MappingService.Read(id,"").Values.FirstOrDefault();
+            return MappingService.ReadAbs(area, address).Values.FirstOrDefault();
         }
 
         /// <summary>
-        /// Add a Symbol
+        /// Read a block
         /// </summary>
-        /// <param name="value"></param>
-        // POST api/values
-        [HttpPost]
-        [Authorize(Policy = "AdministrationPolicy")]
-        public void Post([FromBody]string value)
+        /// <param name="id"></param>
+        /// <returns></returns>
+        // GET api/values/5
+        [HttpGet("{area}")]
+        //[Authorize(Policy = "ReadOnlyPolicy")]
+        public Dictionary<string, object> Get(string area, [FromBody]params string[] addresses)
         {
+            return MappingService.ReadAbs(area, addresses);
         }
+
 
         /// <summary>
         /// Write a symbol
@@ -66,21 +69,25 @@ namespace webpac.Controllers
         /// <param name="id"></param>
         /// <param name="value"></param>
         // PUT api/values/5
-        [HttpPut("{id}")]
+        [HttpPut("{area}")]
         [Authorize(Policy = "ReadWritePolicy")]
-        public void Put(int id, [FromBody]string value)
+        public void Put(string area,[FromBody]Dictionary<string, object> value)
         {
+            MappingService.WriteAbs(area, value);
         }
 
         /// <summary>
-        /// Remove a symbol
+        /// Write data to a block
         /// </summary>
         /// <param name="id"></param>
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        [Authorize(Policy = "AdministrationPolicy")]
-        public void Delete(int id)
+        /// <param name="value"></param>
+        // PUT api/values/5
+        [HttpPut("{area}/{variable}")]
+        [Authorize(Policy = "ReadWritePolicy")]
+        public void Put(string area, string address, [FromBody]object value)
         {
+            MappingService.Write(area, new Dictionary<string, object> { { address, value } });
         }
+
     }
 }

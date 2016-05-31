@@ -23,7 +23,156 @@ namespace webpac.Services
         private bool _disposed; // to detect redundant calls
         private bool _connectOnStartup;
         private IRuntimeCompilerService _rumtimeCompiler;
-        private readonly ConcurrentDictionary<string, object> _subscritions = new ConcurrentDictionary<string, object>();
+        private readonly ConcurrentDictionary<string,SubscriptionTree> _subscritions = new ConcurrentDictionary<string,SubscriptionTree>();
+
+        private class SubscriptionTree
+        {
+            private readonly OnDataChangeEventHandler _dataChanged;
+            public string Name { get; set; }
+            public ConcurrentDictionary<string, SubscriptionTree> Childs { get; private set; }
+            public ConcurrentDictionary<string, object> Subscribers { get; private set; }
+            private int _subscriptions = 0;
+
+            private SubscriptionTree()
+            {
+                Subscribers = new ConcurrentDictionary<string, object>();
+                Childs = new ConcurrentDictionary<string, SubscriptionTree>();
+            }
+
+
+            internal SubscriptionTree(OnDataChangeEventHandler dataChanged) : this()
+            {
+                _dataChanged = dataChanged;
+            }
+
+            public IEnumerable<string> GetSubscribersFor(IEnumerable<IEnumerable<string>> vars)
+            {
+                var subscribers = new List<string>();
+                foreach (var varPath in vars)
+                    subscribers.AddRange(GetSubscribersFor(varPath));
+                return subscribers;
+            }
+
+            private IEnumerable<string> GetSubscribersFor(IEnumerable<string> variablePath)
+            {
+                var subscribers = new List<string>();
+                if (variablePath.Any())
+                {
+                    foreach (var child in Childs.Where(item => item.Key == variablePath.FirstOrDefault()))
+                    {
+                        subscribers.AddRange(child.Value.GetSubscribersFor(variablePath.Skip(1)));
+                    }
+                }
+                else
+                    return Subscribers.Keys;
+                return subscribers;
+            }
+
+            public int AddSubscribtion(string id, IEnumerable<IEnumerable<string>> vars)
+            {
+                var updated = 0;
+                foreach (var variablePath in vars)
+                {
+                    if (UpdateSubscribtion(id, variablePath, false, ref _subscriptions))
+                        updated++;
+                }
+                if (_subscriptions > 0 && _dataChanged != null)
+                    _papper.SubscribeDataChanges(Name, OnDataChanged);
+                return updated;
+            }
+
+            public int RemoveSubscription(string id, IEnumerable<IEnumerable<string>> vars)
+            {
+                var updated = 0;
+                foreach (var variablePath in vars)
+                {
+                    if (UpdateSubscribtion(id, variablePath, true, ref _subscriptions))
+                        updated++;
+                }
+
+                if(_subscriptions <= 0 && _dataChanged != null)
+                    _papper.UnsubscribeChanges(Name, OnDataChanged);
+                return updated;
+            }
+
+            public void RemoveSubscription(string id)
+            {
+                RemoveSubscription(id, ref _subscriptions);
+                if (_subscriptions <= 0 && _dataChanged != null)
+                    _papper.UnsubscribeChanges(Name, OnDataChanged);
+            }
+
+            private bool UpdateSubscribtion(string id, IEnumerable<string> variablePath, bool remove, ref int subscriptions)
+            {
+                if (variablePath.Any())
+                {
+                    var key = variablePath.First();
+                    SubscriptionTree entry;
+                    if (!Childs.TryGetValue(key, out entry) && !remove)
+                    {
+                        entry = new SubscriptionTree();
+                        if (!Childs.TryAdd(key, entry))
+                            entry = Childs[key];
+                    }
+                    return entry != null ? entry.UpdateSubscribtion(id, variablePath.Skip(1), remove, ref subscriptions) : false;
+                }
+                else
+                {
+                    if(remove)
+                    {
+                        object o;
+                        if(Subscribers.TryRemove(id, out o))
+                        {
+                            Interlocked.Decrement(ref subscriptions);
+                            return true;
+                        }
+                        return false;
+                    }
+                    else
+                    {
+                        if(Subscribers.TryAdd(id, null))
+                        {
+                            Interlocked.Increment(ref subscriptions);
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+            }
+
+            private void RemoveSubscription(string id, ref int subscriptions)
+            {
+                object o;
+                if (Subscribers.TryRemove(id, out o))
+                    Interlocked.Decrement(ref subscriptions);
+                foreach (var child in Childs)
+                    child.Value.RemoveSubscription(id, ref subscriptions);
+            }
+
+            private void OnDataChanged(object sender, PlcNotificationEventArgs e)
+            {
+                if(_dataChanged != null)
+                {
+                    var changed = new List<SubscriptionInformationPackage>();
+                    foreach (var changes in e)
+                    {
+                        changed.Add(new SubscriptionInformationPackage
+                        {
+                            Mapping = Name,
+                            Variable = changes.Key,
+                            Value = changes.Value,
+                            Subscribers = GetSubscribersFor(changes.Key.Split('.'))
+                        });
+                    }
+
+                    _dataChanged(changed);
+                }
+            }
+        }
+
+
+        public event OnDataChangeEventHandler DataChanged;
+
         #endregion
 
 
@@ -46,7 +195,7 @@ namespace webpac.Services
 
         public void Init()
         {
-            if(_connectOnStartup)
+            if (_connectOnStartup)
                 OpenConnection();
         }
 
@@ -111,7 +260,7 @@ namespace webpac.Services
                                          .Where(type => type.GetTypeInfo()
                                                             .GetCustomAttribute<MappingAttribute>() != null))
                     {
-                            _papper.AddMapping(type);
+                        _papper.AddMapping(type);
                     }
                 }
             }
@@ -141,7 +290,7 @@ namespace webpac.Services
         /// <returns></returns>
         public IEnumerable<string> GetDataBlocks()
         {
-            return _client.GetBlocksOfType(PlcBlockType.Db).Select( bi => $"DB{bi.Number}");
+            return _client.GetBlocksOfType(PlcBlockType.Db).Select(bi => $"DB{bi.Number}");
         }
 
         /// <summary>
@@ -159,23 +308,18 @@ namespace webpac.Services
         /// <param name="mapping"></param>
         /// <param name="variables"></param>
         /// <returns></returns>
-        public Dictionary<string,string> GetAddresses(string mapping, params string[] variables)
+        public Dictionary<string, string> GetAddresses(string mapping, params string[] variables)
         {
             //TODO resolve correct
             var kvp = new Dictionary<string, string>();
             foreach (var variable in variables)
             {
-                var address = _papper.GetAddressOf(mapping,variable);
+                var address = _papper.GetAddressOf(mapping, variable);
                 var bitOffset = address.Offset.Bits > -1 ? address.Offset.Bits : 0;
                 var bitSize = address.Size.Bits > -1 ? address.Size.Bits : 0;
                 kvp.Add(variable, $"{address.Selector},{address.Offset.Bytes}.{bitOffset},{address.Size.Bytes}.{bitSize}");
             }
             return kvp;
-        }
-
-        public object ReadFromAddress(string address)
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -184,9 +328,20 @@ namespace webpac.Services
         /// <param name="mapping"></param>
         /// <param name="vars"></param>
         /// <returns></returns>
-        public Dictionary<string,object> Read(string mapping, params string[] vars)
+        public Dictionary<string, object> Read(string mapping, params string[] vars)
         {
             return _papper.Read(mapping, vars);
+        }
+
+        /// <summary>
+        /// Read the given variables from the plc
+        /// </summary>
+        /// <param name="mapping"></param>
+        /// <param name="vars"></param>
+        /// <returns></returns>
+        public Dictionary<string, object> ReadAbs(string mapping, params string[] vars)
+        {
+            return _papper.ReadAbs(mapping, vars);
         }
 
         /// <summary>
@@ -200,19 +355,58 @@ namespace webpac.Services
             return _papper.Write(mapping, values);
         }
 
+        /// <summary>
+        /// Write the given values to the plc
+        /// </summary>
+        /// <param name="mapping"></param>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        public bool WriteAbs(string mapping, Dictionary<string, object> values)
+        {
+            return _papper.WriteAbs(mapping, values);
+        }
+
 
         public bool SubscribeChanges(string subscriberId, string mapping, params string[] vars)
         {
-            return true;
+            if (DataChanged == null)
+                throw new NullReferenceException("DataChanged");
+            var enumerable = new List<List<string>>();
+            foreach (var variable in vars)
+                enumerable.Add(variable.Split('.').ToList());
+
+            SubscriptionTree item;
+            if(!_subscritions.TryGetValue(mapping, out item))
+            {
+                item = new SubscriptionTree(DataChanged);
+                if (!_subscritions.TryAdd(mapping, item))
+                    item = _subscritions[mapping];
+            }
+
+            return item.AddSubscribtion(subscriberId, enumerable) == vars.Length;
         }
 
 
         public bool UnsubscribeChanges(string subscriberId, string mapping, params string[] vars)
         {
-            return true;
+            var enumerable = new List<List<string>>();
+            foreach (var variable in vars)
+                enumerable.Add(variable.Split('.').ToList());
+            SubscriptionTree item;
+            if (!_subscritions.TryGetValue(mapping, out item))
+                return false;
+            return item.RemoveSubscription(subscriberId, enumerable) == vars.Length;
+        }
+
+        public void RemoveSubscriptionsForId(string subscriberId)
+        {
+            foreach (var item in _subscritions.Values)
+                item.RemoveSubscription(subscriberId);
         }
 
         #region Helper
+
+
 
         private bool OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)
         {
@@ -240,7 +434,7 @@ namespace webpac.Services
             switch (ad.Item1)
             {
                 case PlcArea.DB:
-                    return _client.ReadAny(PlcArea.DB, offset, typeof(byte), new [] { length, ad.Item2 }) as byte[];
+                    return _client.ReadAny(PlcArea.DB, offset, typeof(byte), new[] { length, ad.Item2 }) as byte[];
                 default:
                     throw new NotImplementedException();
             }
@@ -253,9 +447,9 @@ namespace webpac.Services
             if (!Enum.TryParse(selector.Substring(0, 2), out area))
                 throw new ArgumentException($"Invalid selector {selector} given! Could not determine area");
 
-            if(area == PlcArea.DB)
+            if (area == PlcArea.DB)
             {
-                if(!int.TryParse(selector.Substring(2), out blockNumber))
+                if (!int.TryParse(selector.Substring(2), out blockNumber))
                     throw new ArgumentException($"Invalid selector {selector} given! Could not pars block number");
             }
             return new Tuple<PlcArea, int>(area, blockNumber);

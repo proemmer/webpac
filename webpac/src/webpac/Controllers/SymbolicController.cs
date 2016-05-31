@@ -38,11 +38,11 @@ namespace webpac.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         // GET api/values/5
-        [HttpGet("{id}/{variable}")]
+        [HttpGet("{mapping}/{variable}")]
         //[Authorize(Policy = "ReadOnlyPolicy")]
-        public Dictionary<string,object> Get(string id, string variable = null)
+        public Dictionary<string,object> Get(string mapping, string variable = null)
         {
-            return MappingService.Read(id, string.IsNullOrWhiteSpace(variable)
+            return MappingService.Read(mapping, string.IsNullOrWhiteSpace(variable)
                                             ? new[] { "This" }
                                             : Uri.UnescapeDataString(variable).Split(new[] { "/" }, StringSplitOptions.RemoveEmptyEntries));
         }
@@ -53,11 +53,11 @@ namespace webpac.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         // GET api/values/5
-        [HttpGet("{id}")]
+        [HttpGet("{mapping}")]
         //[Authorize(Policy = "ReadOnlyPolicy")]
-        public Dictionary<string, object> Get(string id, params string[] variables)
+        public Dictionary<string, object> Get(string mapping, [FromBody]params string[] variables)
         {
-            return MappingService.Read(id, !variables.Any()
+            return MappingService.Read(mapping, !variables.Any()
                                             ? new[] { "This" }
                                             : variables);
         }
@@ -69,11 +69,11 @@ namespace webpac.Controllers
         /// <param name="id"></param>
         /// <param name="value"></param>
         // PUT api/values/5
-        [HttpPut("{id}")]
+        [HttpPut("{mapping}")]
         [Authorize(Policy = "ReadWritePolicy")]
-        public void Put(string id,[FromBody]Dictionary<string,object> value)
+        public void Put(string mapping,[FromBody]Dictionary<string,object> value)
         {
-            MappingService.Write(id, value);
+            MappingService.Write(mapping, value);
         }
 
 
@@ -83,11 +83,11 @@ namespace webpac.Controllers
         /// <param name="id"></param>
         /// <param name="value"></param>
         // PUT api/values/5
-        [HttpPut("{id}/{variable}")]
+        [HttpPut("{mapping}/{variable}")]
         [Authorize(Policy = "ReadWritePolicy")]
-        public void Put(string id, string variable, [FromBody]object value)
+        public void Put(string mapping, string variable, [FromBody]object value)
         {
-            MappingService.Write(id, new Dictionary<string, object>{ { variable, value } });
+            MappingService.Write(mapping, new Dictionary<string, object>{ { variable, value } });
         }
 
     }
