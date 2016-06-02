@@ -15,6 +15,7 @@ namespace webpac.Controllers
     [Route("api/[controller]")]
     public class TokenController : Controller
     {
+        private readonly ILogger _logger;
         private readonly TokenAuthOptions _tokenOptions;
         private readonly IAuthenticationService _authService;
 
@@ -25,8 +26,11 @@ namespace webpac.Controllers
         }
 
 
-        public TokenController(TokenAuthOptions tokenOptions, IAuthenticationService authService)
+        public TokenController( TokenAuthOptions tokenOptions, 
+                                IAuthenticationService authService, 
+                                ILogger<TokenController> logger)
         {
+            _logger = logger;
             _authService = authService;
             _tokenOptions = tokenOptions;
             //this.bearerOptions = options.Value;

@@ -2,23 +2,25 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Net;
+using webpac.Filters;
 using webpac.Interfaces;
-using webpac.Services;
 
 namespace webpac.Controllers
 {
+    [ServiceFilter(typeof(ActionLoggerFilter))]
     [Route("api/[controller]")]
-    public class AbsolutesController : BaseController
+    public class AbsolutesController : Controller
     {
+        private readonly ILogger _logger;
         //[FromServices]
         public IMappingService MappingService { get; set; }
 
-        public AbsolutesController(IMappingService mappingService, ILoggerFactory loggerFactory) : base(loggerFactory)
+        public AbsolutesController(IMappingService mappingService, ILoggerFactory loggerFactory, ILogger<AbsolutesController> logger) 
         {
+            _logger = logger;
             MappingService = mappingService;
         }
 
@@ -43,10 +45,17 @@ namespace webpac.Controllers
         /// <returns></returns>
         // GET api/values/5
         [HttpGet("{area}/{address}")]
-        [Authorize(Policy = "ReadOnlyPolicy")]
-        public object Get(string area, string address)
+        [Produces(typeof(object))]
+        //[Authorize(Policy = "ReadOnlyPolicy")]
+        public IActionResult Get(string area, string address)
         {
-            return MappingService.ReadAbs(area, address).Values.FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(area) || string.IsNullOrWhiteSpace(address))
+                return BadRequest();
+
+            var red = MappingService.ReadAbs(area, address).Values.FirstOrDefault();
+            if (red == null)
+                return NotFound();
+            return new ObjectResult(red);
         }
 
         /// <summary>
@@ -56,10 +65,16 @@ namespace webpac.Controllers
         /// <returns></returns>
         // GET api/values/5
         [HttpGet("{area}")]
+        [Produces(typeof(IDictionary<string, object>))]
         //[Authorize(Policy = "ReadOnlyPolicy")]
-        public Dictionary<string, object> Get(string area, [FromBody]params string[] addresses)
+        public IActionResult Get(string area, [FromBody]params string[] addresses)
         {
-            return MappingService.ReadAbs(area, addresses);
+            if (string.IsNullOrWhiteSpace(area) || addresses != null || !addresses.Any())
+                return BadRequest();
+            var red = MappingService.ReadAbs(area, addresses);
+            if (red == null)
+                return NotFound();
+            return new ObjectResult(red);
         }
 
 
@@ -69,11 +84,15 @@ namespace webpac.Controllers
         /// <param name="id"></param>
         /// <param name="value"></param>
         // PUT api/values/5
-        [HttpPut("{area}")]
+        [HttpPatch("{area}")]
         [Authorize(Policy = "ReadWritePolicy")]
-        public void Put(string area,[FromBody]Dictionary<string, object> value)
+        public IActionResult Patch(string area,[FromBody]Dictionary<string, object> value)
         {
-            MappingService.WriteAbs(area, value);
+            if (string.IsNullOrWhiteSpace(area) || value == null || !value.Any())
+                return BadRequest();
+            if (!MappingService.WriteAbs(area, value))
+                return StatusCode((int)HttpStatusCode.NotModified);
+            return new NoContentResult();
         }
 
         /// <summary>
@@ -82,11 +101,15 @@ namespace webpac.Controllers
         /// <param name="id"></param>
         /// <param name="value"></param>
         // PUT api/values/5
-        [HttpPut("{area}/{variable}")]
+        [HttpPatch("{area}/{variable}")]
         [Authorize(Policy = "ReadWritePolicy")]
-        public void Put(string area, string address, [FromBody]object value)
+        public IActionResult Patch(string area, string address, [FromBody]object value)
         {
-            MappingService.Write(area, new Dictionary<string, object> { { address, value } });
+            if (string.IsNullOrWhiteSpace(area) || value == null)
+                return BadRequest();
+            if (!MappingService.WriteAbs(area, new Dictionary<string, object> { { address, value } }))
+                return StatusCode((int)HttpStatusCode.NotModified);
+            return new NoContentResult();
         }
 
     }

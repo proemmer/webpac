@@ -33,7 +33,7 @@ namespace webpac.Services
         //private readonly ICompilerOptionsProvider _compilerOptionsProvider;
         private readonly AssemblyLoadContext _context;
         private readonly DependencyContext _depContext;
-        private readonly CSharpCompilationOptions _compilationOptions;
+        //private readonly CSharpCompilationOptions _compilationOptions;
         private string[] _usings;
         private string _location;
         private readonly ConcurrentDictionary<string, AssemblyMetadata> _metadataFileCache =new ConcurrentDictionary<string, AssemblyMetadata>(StringComparer.OrdinalIgnoreCase);

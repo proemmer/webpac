@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,15 +6,8 @@ using Microsoft.Extensions.Logging;
 using webpac.Interfaces;
 using webpac.Filters;
 using webpac.Services;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using TokenAuthExampleWebApplication;
-using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
-using System.Security.Cryptography;
 using webpac.Configuration;
+using webpac.Swagger;
 
 namespace webpac
 {
@@ -42,18 +31,22 @@ namespace webpac
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Add framework services.
+            services.AddMvc();
+
+
             //add and configure swagger
-            //services.AddSwaggerGen();
-            //services.ConfigureSwaggerDocument(options =>
-            //{
-            //    options.SingleApiVersion(new Info
-            //    {
-            //        Version = "v1",
-            //        Title = "webpac",
-            //        Description = "a api to access plc data in a structured way"
-            //    });
-            //    options.OperationFilter(new AuthorizationHeaderParameterOperationFilter());
-            //});
+            services.AddSwaggerGen();
+            services.ConfigureSwaggerGen(options =>
+            {
+                options.SingleApiVersion(new Swashbuckle.SwaggerGen.Generator.Info
+                {
+                    Version = "v1",
+                    Title = "webpac",
+                    Description = "a api to access plc data in a structured way"
+                });
+                options.OperationFilter<AuthorizationHeaderParameterOperationFilter>();
+            });
 
             //add filter to log Actions
             services.AddScoped<ActionLoggerFilter>();
@@ -69,8 +62,7 @@ namespace webpac
             //add signal r usage
             services.AddSignalR();
 
-            // Add framework services.
-            services.AddMvc();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -114,6 +106,9 @@ namespace webpac
             app.UseSignalR();
 
             app.UseMvc();
+
+            app.UseSwaggerGen();
+            app.UseSwaggerUi();
         }
 
     }
