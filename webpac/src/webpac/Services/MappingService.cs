@@ -219,6 +219,7 @@ namespace webpac.Services
                 if (disposing)
                 {
                     // Dispose managed resources.
+                    ClosePapperIfExits();
                     if (_client != null)
                     {
                         _client.Disconnect();
@@ -243,15 +244,20 @@ namespace webpac.Services
         }
         #endregion
 
+        /// <summary>
+        /// Open connection to plc
+        /// </summary>
         private void OpenConnection()
         {
             _connectionLock.EnterWriteLock();
             try
             {
                 _client.Connect(_connectionString);
-                if (_client.IsConnected && (_papper == null || _papper.PduSize > _client.PduSize)) //TODO
+                //If papper was null or pdu size of the client is smaller then the last detected
+                if (_client.IsConnected && (_papper == null || _papper.PduSize > _client.PduSize))
                 {
                     var pduSize = _client.PduSize;
+                    ClosePapperIfExits();
                     _papper = new PlcDataMapper(pduSize);
                     _papper.OnRead += OnRead;
                     _papper.OnWrite += OnWrite;
@@ -270,6 +276,9 @@ namespace webpac.Services
             }
         }
 
+        /// <summary>
+        /// Close connection to plc
+        /// </summary>
         private void CloseConnection()
         {
             _connectionLock.EnterWriteLock();
@@ -366,7 +375,13 @@ namespace webpac.Services
             return _papper.WriteAbs(mapping, values);
         }
 
-
+        /// <summary>
+        /// Subscribe to data changes
+        /// </summary>
+        /// <param name="subscriberId">client id from signalR</param>
+        /// <param name="mapping">mapping to subscribe</param>
+        /// <param name="vars">variables to detect</param>
+        /// <returns></returns>
         public bool SubscribeChanges(string subscriberId, string mapping, params string[] vars)
         {
             if (DataChanged == null)
@@ -386,7 +401,13 @@ namespace webpac.Services
             return item.AddSubscribtion(subscriberId, enumerable) == vars.Length;
         }
 
-
+        /// <summary>
+        /// Unsubscribe from data changes
+        /// </summary>
+        /// <param name="subscriberId">client id from signalR</param>
+        /// <param name="mapping">mapping to subscribe</param>
+        /// <param name="vars">variables to detect</param>
+        /// <returns></returns>
         public bool UnsubscribeChanges(string subscriberId, string mapping, params string[] vars)
         {
             var enumerable = new List<List<string>>();
@@ -398,6 +419,10 @@ namespace webpac.Services
             return item.RemoveSubscription(subscriberId, enumerable) == vars.Length;
         }
 
+        /// <summary>
+        /// Remove all subscribtions for the given id
+        /// </summary>
+        /// <param name="subscriberId">client id from signalR</param>
         public void RemoveSubscriptionsForId(string subscriberId)
         {
             foreach (var item in _subscritions.Values)
@@ -407,7 +432,14 @@ namespace webpac.Services
         #region Helper
 
 
-
+        /// <summary>
+        /// write event from papper
+        /// </summary>
+        /// <param name="selector"></param>
+        /// <param name="offset"></param>
+        /// <param name="data"></param>
+        /// <param name="bitMask"></param>
+        /// <returns></returns>
         private bool OnWrite(string selector, int offset, byte[] data, byte bitMask = 0)
         {
             var ad = ExtractAreaData(selector);
@@ -428,6 +460,13 @@ namespace webpac.Services
             }
         }
 
+        /// <summary>
+        /// Read event from papper
+        /// </summary>
+        /// <param name="selector"></param>
+        /// <param name="offset"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
         private byte[] OnRead(string selector, int offset, int length)
         {
             var ad = ExtractAreaData(selector);
@@ -440,6 +479,11 @@ namespace webpac.Services
             }
         }
 
+        /// <summary>
+        /// Extract the plcArea from the given selector
+        /// </summary>
+        /// <param name="selector"></param>
+        /// <returns></returns>
         private static Tuple<PlcArea, int> ExtractAreaData(string selector)
         {
             int blockNumber = 0;
@@ -455,6 +499,10 @@ namespace webpac.Services
             return new Tuple<PlcArea, int>(area, blockNumber);
         }
 
+        /// <summary>
+        /// Validate a connection, if not connected, try connect
+        /// </summary>
+        /// <returns></returns>
         private bool EnsureConnection()
         {
             _connectionLock.EnterUpgradeableReadLock();
@@ -473,6 +521,20 @@ namespace webpac.Services
                 _connectionLock.ExitUpgradeableReadLock();
             }
         }
+
+        /// <summary>
+        /// If papper is existing, release the events and set it to null
+        /// </summary>
+        private void ClosePapperIfExits()
+        {
+            if (_papper != null)
+            {
+                _papper.OnRead -= OnRead;
+                _papper.OnWrite -= OnWrite;
+                _papper = null;
+            }
+        }
+
 
         #endregion
     }

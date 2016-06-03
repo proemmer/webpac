@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using webpac.Controllers;
 using webpac.Interfaces;
-using Newtonsoft.Json;
 using webpac.Models;
 
 namespace webpac.Services

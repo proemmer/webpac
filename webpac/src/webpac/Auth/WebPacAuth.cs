@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.IO;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using TokenAuthExampleWebApplication;
 
-namespace webpac.Configuration
+namespace webpac.Auth
 {
     public static class WebPacAuth
     {
@@ -18,7 +18,7 @@ namespace webpac.Configuration
         private static TokenAuthOptions _tokenOptions;
 
 
-        public static void AddWebPacAuthentication(this IServiceCollection services)
+        public static void AddWebPacAuthentication(this IServiceCollection services, string tokenFile = null)
         {
             // *** CHANGE THIS FOR PRODUCTION USE ***
             // Here, we're generating a random key to sign tokens - obviously this means
@@ -28,13 +28,27 @@ namespace webpac.Configuration
             //
             // See the RSAKeyUtils.GetKeyParameters method for an example of loading from
             // a JSON file.
-            RSAParameters keyParams = RSAKeyUtils.GetRandomKey();
+            RSAParameters keyParams;
+
+            if (!string.IsNullOrWhiteSpace(tokenFile) )
+            {
+                if (!File.Exists(tokenFile))
+                {
+                    if (Directory.Exists(Path.GetDirectoryName(tokenFile)))
+                        RSAKeyUtils.GenerateKeyAndSave(tokenFile);
+                    else
+                        throw new FileNotFoundException(tokenFile);
+                }
+                keyParams = RSAKeyUtils.GetKeyParameters(tokenFile);
+            }
+            else
+                keyParams = RSAKeyUtils.GetRandomKey();
 
             // Create the key, and a set of token options to record signing credentials 
             // using that key, along with the other parameters we will need in the 
             // token controller.
             _key = new RsaSecurityKey(keyParams);
-            _tokenOptions = new TokenAuthOptions()
+            _tokenOptions = new TokenAuthOptions
             {
                 Audience = TokenAudience,
                 Issuer = TokenIssuer,

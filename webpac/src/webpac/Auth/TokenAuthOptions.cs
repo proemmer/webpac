@@ -1,7 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens;
 
-namespace TokenAuthExampleWebApplication
+namespace webpac.Auth
 {
     public class TokenAuthOptions
     {

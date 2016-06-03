@@ -6,7 +6,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Principal;
-using TokenAuthExampleWebApplication;
+using webpac.Auth;
 using webpac.Interfaces;
 using webpac.Models;
 
@@ -33,8 +33,6 @@ namespace webpac.Controllers
             _logger = logger;
             _authService = authService;
             _tokenOptions = tokenOptions;
-            //this.bearerOptions = options.Value;
-            //this.signingCredentials = signingCredentials;
         }
 
         /// <summary>

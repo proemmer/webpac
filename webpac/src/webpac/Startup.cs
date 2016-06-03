@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using webpac.Interfaces;
 using webpac.Filters;
 using webpac.Services;
-using webpac.Configuration;
+using webpac.Auth;
 using webpac.Swagger;
 
 namespace webpac
@@ -34,7 +34,6 @@ namespace webpac
             // Add framework services.
             services.AddMvc();
 
-
             //add and configure swagger
             services.AddSwaggerGen();
             services.ConfigureSwaggerGen(options =>
@@ -57,7 +56,7 @@ namespace webpac
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
 
             //configure the webpac auth
-            services.AddWebPacAuthentication();
+            services.AddWebPacAuthentication(Configuration.GetSection("Auth")?.Get<string>("KeyFile"));
 
             //add signal r usage
             services.AddSignalR();
