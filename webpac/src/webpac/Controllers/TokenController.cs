@@ -12,18 +12,6 @@ using webpac.Models;
 
 namespace webpac.Controllers
 {
-
-    public class Authentication
-    {
-        public bool Authenticated { get; set; }
-        public string User { get; set; }
-        public string Role { get; set; }
-        public string Token { get; set; }
-        public DateTime? TokenExpires { get; set; }
-    }
-
-
-
     [Route("api/[controller]")]
     public class TokenController : Controller
     {
@@ -107,7 +95,7 @@ namespace webpac.Controllers
         /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
-        public dynamic Post([FromBody] AuthRequest req)
+        public Authentication Post([FromBody] AuthRequest req)
         {
             User user = null;
             // Obviously, at this point you need to validate the username and password against whatever system you wish.
@@ -116,9 +104,19 @@ namespace webpac.Controllers
                 var role = user.Type.ToString();
                 DateTime? expires = DateTime.UtcNow.AddMinutes(_authService.ValidationTimeInMin);
                 var token = GetToken(req.username, role, expires);
-                return new { authenticated = true, username = req.username, role = role, token = token, tokenExpires = expires };
+                return new Authentication
+                {
+                    Authenticated = true,
+                    User = req.username,
+                    Role = role,
+                    Token = token,
+                    TokenExpires = expires
+                };
             }
-            return new { authenticated = false };
+            return new Authentication
+            {
+                Authenticated = false
+            };
         }
 
 

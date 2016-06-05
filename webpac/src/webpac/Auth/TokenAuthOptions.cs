@@ -1,5 +1,4 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens;
 
 namespace webpac.Auth
 {

@@ -53,6 +53,7 @@ namespace webpac
             // Add framework services.
             services.AddMvc();
 
+
             //add and configure swagger
             services.AddSwaggerGen();
             services.ConfigureSwaggerGen(options =>
@@ -108,7 +109,7 @@ namespace webpac
             authService.Init();
 
             app.UseWebPackAuth();
-            
+
             app.UseCors(options =>
                      {
                          options.AllowAnyHeader();

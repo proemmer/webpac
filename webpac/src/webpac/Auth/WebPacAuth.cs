@@ -62,7 +62,7 @@ namespace webpac.Auth
         }
 
 
-        public static void UseWebPackAuth(this Microsoft.AspNetCore.Builder.IApplicationBuilder app)
+        public static void UseWebPackAuth(this IApplicationBuilder app)
         {
             app.UseJwtBearerAuthentication(GetBearerOptions());
         }
@@ -122,6 +122,5 @@ namespace webpac.Auth
                     .Build());
             });
         }
-
     }
 }

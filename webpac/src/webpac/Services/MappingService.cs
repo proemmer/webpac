@@ -3,6 +3,7 @@ using Dacs7.Domain;
 using Microsoft.Extensions.Configuration;
 using Papper;
 using Papper.Attributes;
+using Papper.Helper;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,18 +14,24 @@ using webpac.Interfaces;
 
 namespace webpac.Services
 {
+    /// <summary>
+    /// This service handles the connection to the plc
+    /// </summary>
     public class MappingService : IMappingService
     {
         #region Fields
         private ReaderWriterLockSlim _connectionLock = new ReaderWriterLockSlim();
         private Dacs7Client _client = new Dacs7Client();
+        private static ReaderWriterLockSlim _papperLock = new ReaderWriterLockSlim();
         private static PlcDataMapper _papper;
         private string _connectionString = string.Empty;
         private bool _disposed; // to detect redundant calls
         private bool _connectOnStartup;
         private IRuntimeCompilerService _rumtimeCompiler;
         private readonly ConcurrentDictionary<string,SubscriptionTree> _subscritions = new ConcurrentDictionary<string,SubscriptionTree>();
+        #endregion
 
+        #region Helper class for Subscriptions
         private class SubscriptionTree
         {
             private readonly OnDataChangeEventHandler _dataChanged;
@@ -40,7 +47,7 @@ namespace webpac.Services
             }
 
 
-            internal SubscriptionTree(string name , OnDataChangeEventHandler dataChanged) : this()
+            internal SubscriptionTree(string name, OnDataChangeEventHandler dataChanged) : this()
             {
                 Name = name;
                 _dataChanged = dataChanged;
@@ -60,9 +67,7 @@ namespace webpac.Services
                 if (variablePath.Any())
                 {
                     foreach (var child in Childs.Where(item => item.Key == variablePath.FirstOrDefault()))
-                    {
                         subscribers.AddRange(child.Value.GetSubscribersFor(variablePath.Skip(1)));
-                    }
                 }
                 else
                     return Subscribers.Keys;
@@ -83,8 +88,11 @@ namespace webpac.Services
                 }
                 if (_subscriptions > 0 && _dataChanged != null)
                 {
-                    _papper.SubscribeDataChanges(Name, OnDataChanged);
-                    _papper.SetActiveState(true, Name, varNames.ToArray());
+                    using (var guard = new ReaderGuard(_papperLock))
+                    {
+                        _papper.SubscribeDataChanges(Name, OnDataChanged);
+                        _papper.SetActiveState(true, Name, varNames.ToArray());
+                    }
                 }
                 return updated;
             }
@@ -98,8 +106,11 @@ namespace webpac.Services
                         updated++;
                 }
 
-                if(_subscriptions <= 0 && _dataChanged != null)
-                    _papper.UnsubscribeChanges(Name, OnDataChanged);
+                if (_subscriptions <= 0 && _dataChanged != null)
+                {
+                    using (var guard = new ReaderGuard(_papperLock))
+                        _papper.UnsubscribeChanges(Name, OnDataChanged);
+                }
                 return updated;
             }
 
@@ -107,7 +118,10 @@ namespace webpac.Services
             {
                 RemoveSubscription(id, ref _subscriptions);
                 if (_subscriptions <= 0 && _dataChanged != null)
-                    _papper.UnsubscribeChanges(Name, OnDataChanged);
+                {
+                    using (var guard = new ReaderGuard(_papperLock))
+                        _papper.UnsubscribeChanges(Name, OnDataChanged);
+                }
             }
 
             private bool UpdateSubscribtion(string id, IEnumerable<string> variablePath, bool remove, ref int subscriptions)
@@ -126,10 +140,10 @@ namespace webpac.Services
                 }
                 else
                 {
-                    if(remove)
+                    if (remove)
                     {
                         object o;
-                        if(Subscribers.TryRemove(id, out o))
+                        if (Subscribers.TryRemove(id, out o))
                         {
                             Interlocked.Decrement(ref subscriptions);
                             return true;
@@ -138,7 +152,7 @@ namespace webpac.Services
                     }
                     else
                     {
-                        if(Subscribers.TryAdd(id, null))
+                        if (Subscribers.TryAdd(id, null))
                         {
                             Interlocked.Increment(ref subscriptions);
                             return true;
@@ -159,7 +173,7 @@ namespace webpac.Services
 
             private void OnDataChanged(object sender, PlcNotificationEventArgs e)
             {
-                if(_dataChanged != null)
+                if (_dataChanged != null)
                 {
                     var changed = new List<SubscriptionInformationPackage>();
                     foreach (var changes in e)
@@ -177,13 +191,14 @@ namespace webpac.Services
                 }
             }
         }
-
+        #endregion
 
         public event OnDataChangeEventHandler DataChanged;
 
-        #endregion
-
-
+        /// <summary>
+        /// Constructor with injection
+        /// </summary>
+        /// <param name="rumtimeCompiler"></param>
         public MappingService(IRuntimeCompilerService rumtimeCompiler)
         {
             _rumtimeCompiler = rumtimeCompiler;
@@ -227,7 +242,14 @@ namespace webpac.Services
                 if (disposing)
                 {
                     // Dispose managed resources.
+
+                    //Remove handles if exists
+                    var handler = DataChanged;
+                    if (handler != null)
+                        DataChanged -= handler;
+
                     ClosePapperIfExits();
+
                     if (_client != null)
                     {
                         _client.Disconnect();
@@ -257,30 +279,29 @@ namespace webpac.Services
         /// </summary>
         private void OpenConnection()
         {
-            _connectionLock.EnterWriteLock();
-            try
-            {
+            using (var guard = new WriterGuard(_connectionLock))
+            { 
                 _client.Connect(_connectionString);
                 //If papper was null or pdu size of the client is smaller then the last detected
                 if (_client.IsConnected && (_papper == null || _papper.PduSize > _client.PduSize))
                 {
                     var pduSize = _client.PduSize;
-                    ClosePapperIfExits();
-                    _papper = new PlcDataMapper(pduSize);
-                    _papper.OnRead += OnRead;
-                    _papper.OnWrite += OnWrite;
+                    
+                    using (var papperGuard = new WriterGuard(_papperLock))
+                    {
+                        ClosePapperIfExits();
+                        _papper = new PlcDataMapper(pduSize);
+                        _papper.OnRead += OnRead;
+                        _papper.OnWrite += OnWrite;
 
-                    foreach (var type in _rumtimeCompiler.GetTypes()
+                        foreach (var type in _rumtimeCompiler.GetTypes()
                                          .Where(type => type.GetTypeInfo()
                                                             .GetCustomAttribute<MappingAttribute>() != null))
-                    {
-                        _papper.AddMapping(type);
+                        {
+                            _papper.AddMapping(type);
+                        }
                     }
                 }
-            }
-            finally
-            {
-                _connectionLock.ExitWriteLock();
             }
         }
 
@@ -289,15 +310,8 @@ namespace webpac.Services
         /// </summary>
         private void CloseConnection()
         {
-            _connectionLock.EnterWriteLock();
-            try
-            {
+            using (var guard = new WriterGuard(_connectionLock))
                 _client.Disconnect();
-            }
-            finally
-            {
-                _connectionLock.ExitWriteLock();
-            }
         }
 
 
@@ -513,8 +527,7 @@ namespace webpac.Services
         /// <returns></returns>
         private bool EnsureConnection()
         {
-            _connectionLock.EnterUpgradeableReadLock();
-            try
+            using (var guard = new UpgradeableGuard(_connectionLock))
             {
                 if (!_client.IsConnected)
                 {
@@ -523,10 +536,6 @@ namespace webpac.Services
                         throw new PlcConnectionException();
                 }
                 return _papper != null && _client.IsConnected;
-            }
-            finally
-            {
-                _connectionLock.ExitUpgradeableReadLock();
             }
         }
 
@@ -537,9 +546,13 @@ namespace webpac.Services
         {
             if (_papper != null)
             {
-                _papper.OnRead -= OnRead;
-                _papper.OnWrite -= OnWrite;
-                _papper = null;
+                using (var papperGuard = new WriterGuard(_papperLock))
+                {
+                    ClosePapperIfExits();
+                    _papper.OnRead -= OnRead;
+                    _papper.OnWrite -= OnWrite;
+                    _papper = null;
+                }
             }
         }
 

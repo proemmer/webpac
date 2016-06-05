@@ -9,14 +9,12 @@ namespace webpac.Filters
     /// </summary>
     public class ActionLoggerFilter : ActionFilterAttribute
     {
-        public ILoggerFactory LoggerFactory { get; set; }
         private ILogger _logger;
 
         public ActionLoggerFilter(ILogger<ActionLoggerFilter> logger)
         {
             _logger = logger;
         }
-
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
