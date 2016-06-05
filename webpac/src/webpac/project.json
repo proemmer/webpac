@@ -40,6 +40,12 @@
         "dnxcore50",
         "portable-net45+win8"
       ]
+    },
+    "netstandard1.5": {
+      "imports": [
+        "dnxcore50",
+        "portable-net452+win81"
+      ]
     }
   },
 

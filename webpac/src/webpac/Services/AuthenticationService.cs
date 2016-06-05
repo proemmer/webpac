@@ -8,11 +8,13 @@ namespace webpac.Services
 {
     public class AuthenticationService : IAuthenticationService
     {
-        private IEnumerable<User> Users;
+        private IEnumerable<User> users;
+        public int ValidationTimeInMin { get; private set; }
 
         public void Configure(IConfigurationSection config)
         {
-            Users = config.Get<User[]>("Users");
+            users = config.Get<User[]>("Users");
+            ValidationTimeInMin = config.Get<int>("TokenValidatenTimeinMinutes");
         }
 
         public void Init()
@@ -26,7 +28,7 @@ namespace webpac.Services
 
         public bool TryAuthorize(string username, string password, ref User user)
         {
-            user = Users.FirstOrDefault(x => x.Username == username);
+            user = users.FirstOrDefault(x => x.Username == username);
             if (user == null)
                 return false;
             if (!string.Equals(password, user.Password))

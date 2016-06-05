@@ -8,13 +8,32 @@ using webpac.Filters;
 using webpac.Services;
 using webpac.Auth;
 using webpac.Swagger;
+using System.IO;
+using System;
 
 namespace webpac
 {
     public class Startup
     {
 
+        public static void Main(string[] args)
+        {
+            try
+            {
+                var host = new WebHostBuilder()
+                    .UseKestrel()
+                    .UseContentRoot(Directory.GetCurrentDirectory())
+                    .UseIISIntegration()
+                    .UseStartup<Startup>()
+                    .Build();
 
+                host.Run();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
 
         public Startup(IHostingEnvironment env)
         {
@@ -59,7 +78,10 @@ namespace webpac
             services.AddWebPacAuthentication(Configuration.GetSection("Auth")?.Get<string>("KeyFile"));
 
             //add signal r usage
-            services.AddSignalR();
+            services.AddSignalR(options =>
+            {
+                options.Hubs.EnableDetailedErrors = true;
+            });
 
 
         }
@@ -102,6 +124,7 @@ namespace webpac
                 app.UseDeveloperExceptionPage();
             }
 
+            //app.UseWebSockets();
             app.UseSignalR();
 
             app.UseMvc();

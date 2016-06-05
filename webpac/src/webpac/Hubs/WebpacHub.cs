@@ -12,7 +12,7 @@ using webpac.Interfaces;
 namespace webpac.Hubs
 {
     [HubName("webpac")]
-    public class WebpacHub : Hub
+    public class WebpacHub : Hub<IWebpacClient>
     {
         private IMappingService _mappingService;
 

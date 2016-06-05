@@ -28,7 +28,7 @@ namespace webpac.Services
         private class SubscriptionTree
         {
             private readonly OnDataChangeEventHandler _dataChanged;
-            public string Name { get; set; }
+            public string Name { get; private set; }
             public ConcurrentDictionary<string, SubscriptionTree> Childs { get; private set; }
             public ConcurrentDictionary<string, object> Subscribers { get; private set; }
             private int _subscriptions = 0;
@@ -40,8 +40,9 @@ namespace webpac.Services
             }
 
 
-            internal SubscriptionTree(OnDataChangeEventHandler dataChanged) : this()
+            internal SubscriptionTree(string name , OnDataChangeEventHandler dataChanged) : this()
             {
+                Name = name;
                 _dataChanged = dataChanged;
             }
 
@@ -71,13 +72,20 @@ namespace webpac.Services
             public int AddSubscribtion(string id, IEnumerable<IEnumerable<string>> vars)
             {
                 var updated = 0;
+                var varNames = new List<string>();
                 foreach (var variablePath in vars)
                 {
                     if (UpdateSubscribtion(id, variablePath, false, ref _subscriptions))
+                    {
+                        varNames.Add(variablePath.Aggregate((a, b) => $"{a}.{b}"));
                         updated++;
+                    }
                 }
                 if (_subscriptions > 0 && _dataChanged != null)
+                {
                     _papper.SubscribeDataChanges(Name, OnDataChanged);
+                    _papper.SetActiveState(true, Name, varNames.ToArray());
+                }
                 return updated;
             }
 
@@ -393,7 +401,7 @@ namespace webpac.Services
             SubscriptionTree item;
             if(!_subscritions.TryGetValue(mapping, out item))
             {
-                item = new SubscriptionTree(DataChanged);
+                item = new SubscriptionTree(mapping, DataChanged);
                 if (!_subscritions.TryAdd(mapping, item))
                     item = _subscritions[mapping];
             }

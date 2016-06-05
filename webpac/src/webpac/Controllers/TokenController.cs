@@ -12,12 +12,25 @@ using webpac.Models;
 
 namespace webpac.Controllers
 {
+
+    public class Authentication
+    {
+        public bool Authenticated { get; set; }
+        public string User { get; set; }
+        public string Role { get; set; }
+        public string Token { get; set; }
+        public DateTime? TokenExpires { get; set; }
+    }
+
+
+
     [Route("api/[controller]")]
     public class TokenController : Controller
     {
         private readonly ILogger _logger;
         private readonly TokenAuthOptions _tokenOptions;
         private readonly IAuthenticationService _authService;
+        private readonly int _tokenValidatenTimeinMinutes;
 
         public class AuthRequest
         {
@@ -26,8 +39,8 @@ namespace webpac.Controllers
         }
 
 
-        public TokenController( TokenAuthOptions tokenOptions, 
-                                IAuthenticationService authService, 
+        public TokenController(TokenAuthOptions tokenOptions,
+                                IAuthenticationService authService,
                                 ILogger<TokenController> logger)
         {
             _logger = logger;
@@ -41,50 +54,50 @@ namespace webpac.Controllers
         /// the user is authenticated, which will reset the expiry.
         /// </summary>
         /// <returns></returns>
-        [HttpGet]
-        [Authorize("AdministrationPolicy")]
-        public dynamic Get()
-        {
-            /* 
-            ******* WARNING WARNING WARNING ****** 
-            ******* WARNING WARNING WARNING ****** 
-            ******* WARNING WARNING WARNING ****** 
-            THIS METHOD SHOULD BE REMOVED IN PRODUCTION USE-CASES - IT ALLOWS A USER WITH 
-            A VALID TOKEN TO REMAIN LOGGED IN FOREVER, WITH NO WAY OF EVER EXPIRING THEIR
-            RIGHT TO USE THE APPLICATION.
-            Refresh Tokens (see https://auth0.com/docs/refresh-token) should be used to 
-            retrieve new tokens. 
-            ******* WARNING WARNING WARNING ****** 
-            ******* WARNING WARNING WARNING ****** 
-            ******* WARNING WARNING WARNING ****** 
-            */
-            bool authenticated = false;
-            string user = null;
-            string role = null;
-            string token = null;
-            DateTime? tokenExpires = default(DateTime?);
+        //[HttpGet]
+        //[Authorize("AdministrationPolicy")]
+        //public dynamic Get()
+        //{
+        //    /* 
+        //    ******* WARNING WARNING WARNING ****** 
+        //    ******* WARNING WARNING WARNING ****** 
+        //    ******* WARNING WARNING WARNING ****** 
+        //    THIS METHOD SHOULD BE REMOVED IN PRODUCTION USE-CASES - IT ALLOWS A USER WITH 
+        //    A VALID TOKEN TO REMAIN LOGGED IN FOREVER, WITH NO WAY OF EVER EXPIRING THEIR
+        //    RIGHT TO USE THE APPLICATION.
+        //    Refresh Tokens (see https://auth0.com/docs/refresh-token) should be used to 
+        //    retrieve new tokens. 
+        //    ******* WARNING WARNING WARNING ****** 
+        //    ******* WARNING WARNING WARNING ****** 
+        //    ******* WARNING WARNING WARNING ****** 
+        //    */
+        //    bool authenticated = false;
+        //    string user = null;
+        //    string role = null;
+        //    string token = null;
+        //    DateTime? tokenExpires = default(DateTime?);
 
-            var currentUser = HttpContext.User;
-            if (currentUser != null)
-            {
-                authenticated = currentUser.Identity.IsAuthenticated;
-                if (authenticated)
-                {
-                    user = currentUser.Identity.Name;
-                    foreach (Claim c in currentUser.Claims) if (c.Type == ClaimTypes.Role) role = c.Value;
-                    tokenExpires = DateTime.UtcNow.AddMinutes(2);
-                    token = GetToken(currentUser.Identity.Name, role, tokenExpires);
-                }
-            }
-            return new
-                    {
-                        authenticated = authenticated,
-                        user = user,
-                        role = role,
-                        token = token,
-                        tokenExpires = tokenExpires
-                    };
-        }
+        //    var currentUser = HttpContext.User;
+        //    if (currentUser != null)
+        //    {
+        //        authenticated = currentUser.Identity.IsAuthenticated;
+        //        if (authenticated)
+        //        {
+        //            user = currentUser.Identity.Name;
+        //            foreach (Claim c in currentUser.Claims) if (c.Type == ClaimTypes.Role) role = c.Value;
+        //            tokenExpires = DateTime.UtcNow.AddMinutes(2);
+        //            token = GetToken(currentUser.Identity.Name, role, tokenExpires);
+        //        }
+        //    }
+        //    return new Authentication
+        //    {
+        //        Authenticated = authenticated,
+        //        User = user,
+        //        Role = role,
+        //        Token = token,
+        //        TokenExpires = tokenExpires
+        //    };
+        //}
 
 
         /// <summary>
@@ -101,7 +114,7 @@ namespace webpac.Controllers
             if (_authService.TryAuthorize(req.username, req.password, ref user))
             {
                 var role = user.Type.ToString();
-                DateTime? expires = DateTime.UtcNow.AddMinutes(20);
+                DateTime? expires = DateTime.UtcNow.AddMinutes(_authService.ValidationTimeInMin);
                 var token = GetToken(req.username, role, expires);
                 return new { authenticated = true, username = req.username, role = role, token = token, tokenExpires = expires };
             }
@@ -115,7 +128,7 @@ namespace webpac.Controllers
 
             // Here, you should create or look up an identity for the user which is being authenticated.
             // For now, just creating a simple generic identity.
-            ClaimsIdentity identity = new ClaimsIdentity(new GenericIdentity(user, "TokenAuth"), new[] 
+            ClaimsIdentity identity = new ClaimsIdentity(new GenericIdentity(user, "TokenAuth"), new[]
             {
                 new Claim(ClaimTypes.Role,role,ClaimValueTypes.String)
             });
