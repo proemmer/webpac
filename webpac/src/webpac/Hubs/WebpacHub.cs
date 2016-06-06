@@ -79,6 +79,30 @@ namespace webpac.Hubs
         }
 
         /// <summary>
+        /// Call this method to subscribe variables for data change
+        /// </summary>
+        /// <param name="area">name of the used area (e.g. DB100, FB, IB, QB,..)</param>
+        /// <param name="adresses">adresses for watching</param>
+        /// <returns></returns>
+        public bool SubscribeRaw(string area, params string[] adresses)
+        {
+            _logger.LogInformation($"Client {Context.ConnectionId}: start subscription to area {area} and adresses {adresses.Aggregate((a, b) => $"{a},{b}")} ");
+            return _mappingService.SubscribeRawChanges(Context.ConnectionId, area, adresses);
+        }
+
+        /// <summary>
+        /// Call this method to unsubscribe variables for data change
+        /// </summary>
+        /// <param name="area">name of the used area (e.g. DB100, FB, IB, QB,..)</param>
+        /// <param name="adresses">adresses for watching</param>
+        /// <returns></returns>
+        public bool UnsubscribeRaw(string area, params string[] adresses)
+        {
+            _logger.LogInformation($"Client {Context.ConnectionId}: stop subscription to area {area} and addresses {adresses.Aggregate((a, b) => $"{a},{b}")} ");
+            return _mappingService.UnsubscribeRawChanges(Context.ConnectionId, area, adresses);
+        }
+
+        /// <summary>
         /// This method is called when data are changed
         /// </summary>
         /// <param name="package"></param>
@@ -87,7 +111,7 @@ namespace webpac.Hubs
             foreach (var item in package)
             {
                 _logger.LogInformation($"Data change occurred for mapping {item.Mapping} and variable {item.Variable}.");
-                Clients.Clients(item.Subscribers.ToList()).DataChanged(item.Mapping, item.Variable, item.Value);
+                Clients.Clients(item.Subscribers.ToList()).DataChanged(item.Mapping, item.Variable, item.Value, item.IsRaw);
             }
         }
 

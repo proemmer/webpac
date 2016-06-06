@@ -20,6 +20,7 @@ namespace webpac.Services
     public class MappingService : IMappingService
     {
         #region Fields
+        private const string ADDRESS_PREFIX = "$ABSSYMBOLS$_";
         private ReaderWriterLockSlim _connectionLock = new ReaderWriterLockSlim();
         private Dacs7Client _client = new Dacs7Client();
         private static ReaderWriterLockSlim _papperLock = new ReaderWriterLockSlim();
@@ -36,6 +37,7 @@ namespace webpac.Services
         {
             private readonly OnDataChangeEventHandler _dataChanged;
             public string Name { get; private set; }
+            public bool IsRaw { get; private set; }
             public ConcurrentDictionary<string, SubscriptionTree> Childs { get; private set; }
             public ConcurrentDictionary<string, object> Subscribers { get; private set; }
             private int _subscriptions = 0;
@@ -47,9 +49,10 @@ namespace webpac.Services
             }
 
 
-            internal SubscriptionTree(string name, OnDataChangeEventHandler dataChanged) : this()
+            internal SubscriptionTree(string name, OnDataChangeEventHandler dataChanged, bool isRaw = false) : this()
             {
                 Name = name;
+                IsRaw = isRaw;
                 _dataChanged = dataChanged;
             }
 
@@ -74,6 +77,48 @@ namespace webpac.Services
                 return subscribers;
             }
 
+            public int AddRawSubscription(string id, IEnumerable<string> adresses)
+            { 
+                var updated = 0;
+                var varNames = new List<string>();
+                foreach (var address in adresses)
+                {
+                    if (UpdateSubscribtion(id, new List<string> { address }, false, ref _subscriptions))
+                    {
+                        updated++;
+                    }
+                }
+                if (_subscriptions > 0 && _dataChanged != null)
+                {
+                    using (var guard = new ReaderGuard(_papperLock))
+                    {
+                        _papper.SubscribeRawDataChanges(Name, OnDataChanged);
+                        _papper.SetRawActiveState(true, Name, adresses.ToArray());
+                    }
+                }
+                return updated;
+            }
+
+            public int RemoveRawSubscription(string id, IEnumerable<string> adresses)
+            {
+                var updated = 0;
+                foreach (var address in adresses)
+                {
+                    if (UpdateSubscribtion(id, new List<string> { address }, true, ref _subscriptions))
+                        updated++;
+                }
+
+                if (_subscriptions <= 0 && _dataChanged != null)
+                {
+                    using (var guard = new ReaderGuard(_papperLock))
+                    {
+                        _papper.SetRawActiveState(false, Name, adresses.ToArray());
+                        _papper.UnsubscribeRawDataChanges(Name, OnDataChanged);
+                    }
+                }
+                return updated;
+            }
+
             public int AddSubscribtion(string id, IEnumerable<IEnumerable<string>> vars)
             {
                 var updated = 0;
@@ -90,8 +135,8 @@ namespace webpac.Services
                 {
                     using (var guard = new ReaderGuard(_papperLock))
                     {
-                        _papper.SubscribeDataChanges(Name, OnDataChanged);
                         _papper.SetActiveState(true, Name, varNames.ToArray());
+                        _papper.SubscribeDataChanges(Name, OnDataChanged);
                     }
                 }
                 return updated;
@@ -100,16 +145,23 @@ namespace webpac.Services
             public int RemoveSubscription(string id, IEnumerable<IEnumerable<string>> vars)
             {
                 var updated = 0;
+                var varNames = new List<string>();
                 foreach (var variablePath in vars)
                 {
                     if (UpdateSubscribtion(id, variablePath, true, ref _subscriptions))
+                    {
+                        varNames.Add(variablePath.Aggregate((a, b) => $"{a}.{b}"));
                         updated++;
+                    }
                 }
 
                 if (_subscriptions <= 0 && _dataChanged != null)
                 {
                     using (var guard = new ReaderGuard(_papperLock))
-                        _papper.UnsubscribeChanges(Name, OnDataChanged);
+                    {
+                        _papper.SetActiveState(false, Name, varNames.ToArray());
+                        _papper.UnsubscribeDataChanges(Name, OnDataChanged);
+                    }
                 }
                 return updated;
             }
@@ -120,7 +172,7 @@ namespace webpac.Services
                 if (_subscriptions <= 0 && _dataChanged != null)
                 {
                     using (var guard = new ReaderGuard(_papperLock))
-                        _papper.UnsubscribeChanges(Name, OnDataChanged);
+                        _papper.UnsubscribeDataChanges(Name, OnDataChanged);
                 }
             }
 
@@ -183,6 +235,7 @@ namespace webpac.Services
                             Mapping = Name,
                             Variable = changes.Key,
                             Value = changes.Value,
+                            IsRaw = IsRaw,
                             Subscribers = GetSubscribersFor(changes.Key.Split('.'))
                         });
                     }
@@ -330,7 +383,7 @@ namespace webpac.Services
         /// <returns></returns>
         public IEnumerable<string> GetSymbols()
         {
-            return _papper?.Mappings ?? new List<string>();
+            return _papper?.Mappings.Where(x => !x.StartsWith("$ABSSYMBOLS$")) ?? new List<string>();
         }
 
         /// <summary>
@@ -442,6 +495,47 @@ namespace webpac.Services
         }
 
         /// <summary>
+        /// Subscribe to raw data changes
+        /// </summary>
+        /// <param name="subscriberId">client id from signalR</param>
+        /// <param name="mapping">mapping to subscribe</param>
+        /// <param name="vars">variables to detect</param>
+        /// <returns></returns>
+        public bool SubscribeRawChanges(string subscriberId, string area, params string[] adresses)
+        {
+            if (DataChanged == null)
+                throw new NullReferenceException("DataChanged");
+
+            SubscriptionTree item;
+            var key = $"{ADDRESS_PREFIX}{area}";
+            if (!_subscritions.TryGetValue(key, out item))
+            {
+                item = new SubscriptionTree(area, DataChanged, true);
+                if (!_subscritions.TryAdd(key, item))
+                    item = _subscritions[key];
+            }
+
+            return item.AddRawSubscription(subscriberId, adresses) == adresses.Length;
+        }
+
+        /// <summary>
+        /// Unsubscribe from raw data changes
+        /// </summary>
+        /// <param name="subscriberId">client id from signalR</param>
+        /// <param name="mapping">mapping to subscribe</param>
+        /// <param name="vars">variables to detect</param>
+        /// <returns></returns>
+        public bool UnsubscribeRawChanges(string subscriberId, string area, params string[] adresses)
+        {
+            var enumerable = new List<List<string>>();
+            SubscriptionTree item;
+            var key = $"{ADDRESS_PREFIX}{area}";
+            if (!_subscritions.TryGetValue(key, out item))
+                return false;
+            return item.RemoveRawSubscription(subscriberId, adresses) == adresses.Length;
+        }
+
+        /// <summary>
         /// Remove all subscribtions for the given id
         /// </summary>
         /// <param name="subscriberId">client id from signalR</param>
@@ -477,6 +571,36 @@ namespace webpac.Services
                     {
                         return false;
                     }
+                case PlcArea.FB:
+                    try
+                    {
+                        _client.WriteAny(PlcArea.FB, offset, data, new[] { data.Length });
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        return false;
+                    }
+                case PlcArea.QB:
+                    try
+                    {
+                        _client.WriteAny(PlcArea.QB, offset, data, new[] { data.Length });
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        return false;
+                    }
+                case PlcArea.IB:
+                    try
+                    {
+                        _client.WriteAny(PlcArea.IB, offset, data, new[] { data.Length });
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        return false;
+                    }
                 default:
                     throw new NotImplementedException();
             }
@@ -496,6 +620,12 @@ namespace webpac.Services
             {
                 case PlcArea.DB:
                     return _client.ReadAny(PlcArea.DB, offset, typeof(byte), new[] { length, ad.Item2 }) as byte[];
+                case PlcArea.FB:
+                    return _client.ReadAny(PlcArea.FB, offset, typeof(byte), new[] { length }) as byte[];
+                case PlcArea.QB:
+                    return _client.ReadAny(PlcArea.QB, offset, typeof(byte), new[] { length }) as byte[];
+                case PlcArea.IB:
+                    return _client.ReadAny(PlcArea.IB, offset, typeof(byte), new[] { length }) as byte[];
                 default:
                     throw new NotImplementedException();
             }

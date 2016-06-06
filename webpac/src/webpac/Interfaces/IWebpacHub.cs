@@ -11,6 +11,6 @@
         /// <param name="mapping">name of the mapping</param>
         /// <param name="variable">name of the variable</param>
         /// <param name="value">new data</param>
-        void DataChanged(string mapping, string variable, object value);
+        void DataChanged(string mapping, string variable, object value, bool isRaw);
     }
 }

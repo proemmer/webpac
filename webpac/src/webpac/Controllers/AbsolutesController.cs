@@ -97,7 +97,7 @@ namespace webpac.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <param name="value"></param>
-        [HttpPatch("{area}/{variable}")]
+        [HttpPatch("{area}/{address}")]
         [Authorize(Policy = "ReadWritePolicy")]
         public IActionResult Patch(string area, string address, [FromBody]object value)
         {
