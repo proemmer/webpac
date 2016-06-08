@@ -1,12 +1,14 @@
 ﻿using Dacs7;
 using Dacs7.Domain;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Papper;
 using Papper.Attributes;
 using Papper.Helper;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -20,6 +22,7 @@ namespace webpac.Services
     public class MappingService : IMappingService
     {
         #region Fields
+        private ILogger _logger;
         private const string ADDRESS_PREFIX = "$ABSSYMBOLS$_";
         private ReaderWriterLockSlim _connectionLock = new ReaderWriterLockSlim();
         private Dacs7Client _client = new Dacs7Client();
@@ -252,8 +255,9 @@ namespace webpac.Services
         /// Constructor with injection
         /// </summary>
         /// <param name="rumtimeCompiler"></param>
-        public MappingService(IRuntimeCompilerService rumtimeCompiler)
+        public MappingService(IRuntimeCompilerService rumtimeCompiler, ILogger<MappingService> logger)
         {
+            _logger = logger;
             _rumtimeCompiler = rumtimeCompiler;
         }
 
@@ -616,18 +620,29 @@ namespace webpac.Services
         private byte[] OnRead(string selector, int offset, int length)
         {
             var ad = ExtractAreaData(selector);
-            switch (ad.Item1)
+            var sw = new Stopwatch();
+            
+            sw.Start();
+            try
             {
-                case PlcArea.DB:
-                    return _client.ReadAny(PlcArea.DB, offset, typeof(byte), new[] { length, ad.Item2 }) as byte[];
-                case PlcArea.FB:
-                    return _client.ReadAny(PlcArea.FB, offset, typeof(byte), new[] { length }) as byte[];
-                case PlcArea.QB:
-                    return _client.ReadAny(PlcArea.QB, offset, typeof(byte), new[] { length }) as byte[];
-                case PlcArea.IB:
-                    return _client.ReadAny(PlcArea.IB, offset, typeof(byte), new[] { length }) as byte[];
-                default:
-                    throw new NotImplementedException();
+                switch (ad.Item1)
+                {
+                    case PlcArea.DB:
+                        return _client.ReadAny(PlcArea.DB, offset, typeof(byte), new[] { length, ad.Item2 }) as byte[];
+                    case PlcArea.FB:
+                        return _client.ReadAny(PlcArea.FB, offset, typeof(byte), new[] { length }) as byte[];
+                    case PlcArea.QB:
+                        return _client.ReadAny(PlcArea.QB, offset, typeof(byte), new[] { length }) as byte[];
+                    case PlcArea.IB:
+                        return _client.ReadAny(PlcArea.IB, offset, typeof(byte), new[] { length }) as byte[];
+                    default:
+                        throw new NotImplementedException();
+                }
+            }
+            finally
+            {
+                sw.Stop();
+                _logger.LogInformation($"Read operation: {selector}.{offset}.{length} lasts {sw.Elapsed.TotalMilliseconds}");
             }
         }
 
