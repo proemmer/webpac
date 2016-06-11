@@ -7,11 +7,11 @@ namespace webpac.Filters
     /// https://damienbod.com/2015/09/15/asp-net-5-action-filters/
     /// This Filter is used to log all Actions on the controllers
     /// </summary>
-    public class ActionLoggerFilter : ActionFilterAttribute
+    public class ActionLoggerAttributeFilter : ActionFilterAttribute
     {
         private ILogger _logger;
 
-        public ActionLoggerFilter(ILogger<ActionLoggerFilter> logger)
+        public ActionLoggerAttributeFilter(ILogger<ActionLoggerAttributeFilter> logger)
         {
             _logger = logger;
         }

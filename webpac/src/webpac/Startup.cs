@@ -68,12 +68,13 @@ namespace webpac
             });
 
             //add filter to log Actions
-            services.AddScoped<ActionLoggerFilter>();
+            services.AddScoped<ActionLoggerAttributeFilter>();
 
             //add the custom services
             services.AddSingleton<IRuntimeCompilerService, RuntimeCompilerService>();
             services.AddSingleton<IMappingService, MappingService>();
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
+            services.AddSingleton<IRelayService, RelayService>();
 
             //configure the webpac auth
             services.AddWebPacAuthentication(Configuration.GetSection("Auth")?.Get<string>("KeyFile"));
@@ -93,7 +94,8 @@ namespace webpac
                                 ILoggerFactory loggerFactory,
                                 IMappingService mappingService,
                                 IRuntimeCompilerService runtimeCompilerService,
-                                IAuthenticationService authService
+                                IAuthenticationService authService,
+                                IRelayService serviceHubConnector
             )
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
@@ -107,6 +109,8 @@ namespace webpac
 
             authService.Configure(Configuration.GetSection("Auth"));
             authService.Init();
+
+            serviceHubConnector.Init();
 
             app.UseWebPackAuth();
 

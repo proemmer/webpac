@@ -18,7 +18,6 @@ namespace webpac.Controllers
         private readonly ILogger _logger;
         private readonly TokenAuthOptions _tokenOptions;
         private readonly IAuthenticationService _authService;
-        private readonly int _tokenValidatenTimeinMinutes;
 
         public class AuthRequest
         {

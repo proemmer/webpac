@@ -4,6 +4,7 @@ using System.Collections.Generic;
 namespace webpac.Interfaces
 {
     public delegate void OnDataChangeEventHandler(List<SubscriptionInformationPackage> package);
+    public delegate void OnPlcConnectionChangeEventHandler(List<string> subscribers, bool state);
 
     public class SubscriptionInformationPackage
     {
@@ -29,6 +30,12 @@ namespace webpac.Interfaces
         bool UnsubscribeRawChanges(string subscriberId, string area, params string[] adresses);
         void RemoveSubscriptionsForId(string subscriberId);
 
+        void AddConnectionSubscriber(string subscriberId);
+        void RemoveConnectionSubscriber(string subscriberId);
+
         event OnDataChangeEventHandler DataChanged;
+        event OnPlcConnectionChangeEventHandler PlcConnectionChanged;
+
+        bool IsConnected { get; }
     }
 }

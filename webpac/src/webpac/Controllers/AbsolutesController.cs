@@ -9,7 +9,7 @@ using webpac.Interfaces;
 
 namespace webpac.Controllers
 {
-    [ServiceFilter(typeof(ActionLoggerFilter))]
+    [ServiceFilter(typeof(ActionLoggerAttributeFilter))]
     [Route("api/[controller]")]
     public class AbsolutesController : Controller
     {

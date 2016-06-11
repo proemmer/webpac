@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Hubs;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using webpac.Interfaces;
@@ -28,17 +27,26 @@ namespace webpac.Hubs
         {
             _mappingService = mappingService;
             _logger = logger;
-            _mappingService.DataChanged += _mappingService_DataChanged;
         }
 
         /// <summary>
-        /// Remove event handle from mappingservice
+        /// Remove event handle from mapping service
         /// </summary>
         /// <param name="disposing"></param>
         protected override void Dispose(bool disposing)
         {
-            _mappingService.DataChanged -= _mappingService_DataChanged;
             base.Dispose(disposing);
+        }
+
+        /// <summary>
+        /// This method is call when a client is connected.
+        /// </summary>
+        /// <returns></returns>
+        public override Task OnConnected()
+        {
+            _logger.LogInformation($"Client {Context.ConnectionId} connected");
+            _mappingService.AddConnectionSubscriber(Context.ConnectionId);
+            return base.OnConnected();
         }
 
         /// <summary>
@@ -50,6 +58,7 @@ namespace webpac.Hubs
         public override Task OnDisconnected(bool stopCalled)
         {
             _logger.LogInformation($"Client {Context.ConnectionId} disconnected (stop call={stopCalled})");
+            _mappingService.RemoveConnectionSubscriber(Context.ConnectionId);
             _mappingService.RemoveSubscriptionsForId(Context.ConnectionId);
             return base.OnDisconnected(stopCalled);
         }
@@ -100,19 +109,6 @@ namespace webpac.Hubs
         {
             _logger.LogInformation($"Client {Context.ConnectionId}: stop subscription to area {area} and addresses {adresses.Aggregate((a, b) => $"{a},{b}")} ");
             return _mappingService.UnsubscribeRawChanges(Context.ConnectionId, area, adresses);
-        }
-
-        /// <summary>
-        /// This method is called when data are changed
-        /// </summary>
-        /// <param name="package"></param>
-        private void _mappingService_DataChanged(List<SubscriptionInformationPackage> package)
-        {
-            foreach (var item in package)
-            {
-                _logger.LogInformation($"Data change occurred for mapping {item.Mapping} and variable {item.Variable}.");
-                Clients.Clients(item.Subscribers.ToList()).DataChanged(item.Mapping, item.Variable, item.Value, item.IsRaw);
-            }
         }
 
     }

@@ -16,14 +16,15 @@
     "Microsoft.Extensions.Logging.Console": "1.0.0-rc2-final",
     "Microsoft.Extensions.Logging.Debug": "1.0.0-rc2-final",
     "Papper": "1.0.2-*",
-    "Dacs7": "1.0.2-*",
+    "Dacs7": "1.0.2-beta4",
     "Microsoft.Extensions.CodeGeneration": "1.0.0-rc1-final",
     "Microsoft.Extensions.CodeGeneration.Core": "1.0.0-rc1-final",
     "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc2-final",
     "Microsoft.Extensions.DependencyInjection": "1.0.0-rc2-final",
     "Microsoft.Extensions.CodeGeneration.Templating": "1.0.0-rc1-final",
     "Microsoft.AspNetCore.SignalR.Server": "0.1.0-*",
-    "Swashbuckle": "6.0.0-beta9"
+    "Swashbuckle": "6.0.0-beta9",
+    "System.IO.Compression": "4.1.0-rc3-24206-00"
   },
 
   "tools": {

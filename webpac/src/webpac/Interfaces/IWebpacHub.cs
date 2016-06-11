@@ -12,5 +12,11 @@
         /// <param name="variable">name of the variable</param>
         /// <param name="value">new data</param>
         void DataChanged(string mapping, string variable, object value, bool isRaw);
+
+        /// <summary>
+        /// This method will be called when the plc connection was be changed
+        /// </summary>
+        /// <param name="connected"></param>
+        void ConnectionChanged(bool connected);
     }
 }

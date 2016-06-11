@@ -1,5 +1,6 @@
 ﻿using Dacs7;
 using Dacs7.Domain;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Papper;
@@ -12,6 +13,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using webpac.Interfaces;
 
 namespace webpac.Services
@@ -31,8 +33,12 @@ namespace webpac.Services
         private string _connectionString = string.Empty;
         private bool _disposed; // to detect redundant calls
         private bool _connectOnStartup;
+        private bool _reconnectOnConnectionLost;
+        private int _reconnectIntervall;
         private IRuntimeCompilerService _rumtimeCompiler;
-        private readonly ConcurrentDictionary<string,SubscriptionTree> _subscritions = new ConcurrentDictionary<string,SubscriptionTree>();
+        private CancellationTokenSource _retryCancellation;
+        private readonly ConcurrentDictionary<string, SubscriptionTree> _subscritions = new ConcurrentDictionary<string, SubscriptionTree>();
+        private readonly ConcurrentDictionary<string, object> _subscribers = new ConcurrentDictionary<string, object>();
         #endregion
 
         #region Helper class for Subscriptions
@@ -43,6 +49,7 @@ namespace webpac.Services
             public bool IsRaw { get; private set; }
             public ConcurrentDictionary<string, SubscriptionTree> Childs { get; private set; }
             public ConcurrentDictionary<string, object> Subscribers { get; private set; }
+            public SubscriptionTree Parent { get; private set; }
             private int _subscriptions = 0;
 
             private SubscriptionTree()
@@ -81,7 +88,7 @@ namespace webpac.Services
             }
 
             public int AddRawSubscription(string id, IEnumerable<string> adresses)
-            { 
+            {
                 var updated = 0;
                 var varNames = new List<string>();
                 foreach (var address in adresses)
@@ -172,12 +179,8 @@ namespace webpac.Services
             public void RemoveSubscription(string id)
             {
                 RemoveSubscription(id, ref _subscriptions);
-                if (_subscriptions <= 0 && _dataChanged != null)
-                {
-                    using (var guard = new ReaderGuard(_papperLock))
-                        _papper.UnsubscribeDataChanges(Name, OnDataChanged);
-                }
             }
+
 
             private bool UpdateSubscribtion(string id, IEnumerable<string> variablePath, bool remove, ref int subscriptions)
             {
@@ -187,7 +190,11 @@ namespace webpac.Services
                     SubscriptionTree entry;
                     if (!Childs.TryGetValue(key, out entry) && !remove)
                     {
-                        entry = new SubscriptionTree();
+                        entry = new SubscriptionTree
+                        {
+                            Name = key,
+                            Parent = this
+                        };
                         if (!Childs.TryAdd(key, entry))
                             entry = Childs[key];
                     }
@@ -221,7 +228,26 @@ namespace webpac.Services
             {
                 object o;
                 if (Subscribers.TryRemove(id, out o))
+                {
+                    if (!Subscribers.Any())
+                    {
+
+                        var variable = new List<string> { Name };
+                        var parent = Parent;
+                        while(parent != null)
+                        {
+                            variable.Insert(0, parent.Name);
+                            parent = parent.Parent;
+                        }
+
+                        using (var guard = new ReaderGuard(_papperLock))
+                        {
+                            _papper.SetActiveState(false, variable.FirstOrDefault(), variable.Skip(1).Aggregate((a,b)=> $"{a}.{b}"));
+                            _papper.UnsubscribeDataChanges(Name, OnDataChanged);
+                        }
+                    }
                     Interlocked.Decrement(ref subscriptions);
+                }
                 foreach (var child in Childs)
                     child.Value.RemoveSubscription(id, ref subscriptions);
             }
@@ -250,6 +276,15 @@ namespace webpac.Services
         #endregion
 
         public event OnDataChangeEventHandler DataChanged;
+        public event OnPlcConnectionChangeEventHandler PlcConnectionChanged;
+
+        public bool IsConnected
+        {
+            get
+            {
+                return _client.IsConnected;
+            }
+        }
 
         /// <summary>
         /// Constructor with injection
@@ -259,6 +294,7 @@ namespace webpac.Services
         {
             _logger = logger;
             _rumtimeCompiler = rumtimeCompiler;
+            _client.OnConnectionChange += _client_OnConnectionChange;
         }
 
         ~MappingService()
@@ -271,6 +307,8 @@ namespace webpac.Services
         {
             _connectionString = config.Get<string>("ConnectionString");
             _connectOnStartup = config.Get<bool>("ConnectOnStartup");
+            _reconnectOnConnectionLost = config.Get<bool>("ReconnectOnConnectionLost");
+            _reconnectIntervall = config.Get<int>("ReconnectIntervall");
         }
 
         public void Init()
@@ -299,6 +337,7 @@ namespace webpac.Services
                 if (disposing)
                 {
                     // Dispose managed resources.
+                    _retryCancellation?.Cancel();
 
                     //Remove handles if exists
                     var handler = DataChanged;
@@ -309,6 +348,7 @@ namespace webpac.Services
 
                     if (_client != null)
                     {
+                        _client.OnConnectionChange -= _client_OnConnectionChange;
                         _client.Disconnect();
                         _client = null;
                     }
@@ -337,13 +377,13 @@ namespace webpac.Services
         private void OpenConnection()
         {
             using (var guard = new WriterGuard(_connectionLock))
-            { 
+            {
                 _client.Connect(_connectionString);
                 //If papper was null or pdu size of the client is smaller then the last detected
                 if (_client.IsConnected && (_papper == null || _papper.PduSize > _client.PduSize))
                 {
                     var pduSize = _client.PduSize;
-                    
+
                     using (var papperGuard = new WriterGuard(_papperLock))
                     {
                         ClosePapperIfExits();
@@ -371,6 +411,35 @@ namespace webpac.Services
                 _client.Disconnect();
         }
 
+        /// <summary>
+        /// This method will be called if plc connection changed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void _client_OnConnectionChange(object sender, Dacs7.PlcConnectionNotificationEventArgs e)
+        {
+            PlcConnectionChanged?.Invoke(_subscribers.Keys.ToList(), e.IsConnected);
+
+            if(!e.IsConnected && _reconnectOnConnectionLost)
+                Reconnect();
+        }
+
+        /// <summary>
+        /// This method is called to reconnect the plc after connection was lost
+        /// </summary>
+        private void Reconnect()
+        {
+            if (_retryCancellation == null)
+            {
+                _retryCancellation = new CancellationTokenSource();
+                Task.Factory.StartNew(async () =>
+                {
+                    while (!_retryCancellation.Token.IsCancellationRequested && !EnsureConnection(false))
+                        await Task.Delay(_reconnectIntervall);
+                    _retryCancellation = null;
+                }, _retryCancellation.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            }
+        }
 
         /// <summary>
         /// This method starts a request to the plc to get information of the loaded data blocks
@@ -387,7 +456,8 @@ namespace webpac.Services
         /// <returns></returns>
         public IEnumerable<string> GetSymbols()
         {
-            return _papper?.Mappings.Where(x => !x.StartsWith("$ABSSYMBOLS$")) ?? new List<string>();
+            EnsureConnection();
+            return _papper?.Mappings.Where(x => !x.StartsWith("$ABSSYMBOLS$")).OrderBy(x => x).ToList() ?? new List<string>();
         }
 
         /// <summary>
@@ -398,7 +468,7 @@ namespace webpac.Services
         /// <returns></returns>
         public Dictionary<string, string> GetAddresses(string mapping, params string[] variables)
         {
-            //TODO resolve correct
+            EnsureConnection();
             var kvp = new Dictionary<string, string>();
             foreach (var variable in variables)
             {
@@ -418,6 +488,7 @@ namespace webpac.Services
         /// <returns></returns>
         public Dictionary<string, object> Read(string mapping, params string[] vars)
         {
+            EnsureConnection();
             return _papper.Read(mapping, vars);
         }
 
@@ -429,6 +500,7 @@ namespace webpac.Services
         /// <returns></returns>
         public Dictionary<string, object> ReadAbs(string mapping, params string[] vars)
         {
+            EnsureConnection();
             return _papper.ReadAbs(mapping, vars);
         }
 
@@ -440,6 +512,7 @@ namespace webpac.Services
         /// <returns></returns>
         public bool Write(string mapping, Dictionary<string, object> values)
         {
+            EnsureConnection();
             return _papper.Write(mapping, values);
         }
 
@@ -451,7 +524,34 @@ namespace webpac.Services
         /// <returns></returns>
         public bool WriteAbs(string mapping, Dictionary<string, object> values)
         {
+            EnsureConnection();
             return _papper.WriteAbs(mapping, values);
+        }
+
+        /// <summary>
+        /// Add subscriber to plc connection changed notification
+        /// </summary>
+        /// <param name="subscriberId"></param>
+        public void AddConnectionSubscriber(string subscriberId)
+        {
+            if (!_subscribers.ContainsKey(subscriberId))
+            {
+                if(_subscribers.TryAdd(subscriberId, null))
+                {
+                    //Initial callback
+                    PlcConnectionChanged?.Invoke(new List<string> { subscriberId }, _client.IsConnected);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Remove subscriber from connection change notification
+        /// </summary>
+        /// <param name="subscriberId"></param>
+        public void RemoveConnectionSubscriber(string subscriberId)
+        {
+            object o;
+            _subscribers.TryRemove(subscriberId, out o);
         }
 
         /// <summary>
@@ -470,13 +570,12 @@ namespace webpac.Services
                 enumerable.Add(variable.Split('.').ToList());
 
             SubscriptionTree item;
-            if(!_subscritions.TryGetValue(mapping, out item))
+            if (!_subscritions.TryGetValue(mapping, out item))
             {
                 item = new SubscriptionTree(mapping, DataChanged);
                 if (!_subscritions.TryAdd(mapping, item))
                     item = _subscritions[mapping];
             }
-
             return item.AddSubscribtion(subscriberId, enumerable) == vars.Length;
         }
 
@@ -621,7 +720,7 @@ namespace webpac.Services
         {
             var ad = ExtractAreaData(selector);
             var sw = new Stopwatch();
-            
+
             sw.Start();
             try
             {
@@ -670,14 +769,14 @@ namespace webpac.Services
         /// Validate a connection, if not connected, try connect
         /// </summary>
         /// <returns></returns>
-        private bool EnsureConnection()
+        private bool EnsureConnection(bool throwException = true)
         {
             using (var guard = new UpgradeableGuard(_connectionLock))
             {
                 if (!_client.IsConnected)
                 {
                     OpenConnection();
-                    if (!_client.IsConnected)
+                    if (!_client.IsConnected && throwException)
                         throw new PlcConnectionException();
                 }
                 return _papper != null && _client.IsConnected;
