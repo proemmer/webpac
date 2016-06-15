@@ -68,7 +68,7 @@ namespace webpac
             });
 
             //add filter to log Actions
-            services.AddScoped<ActionLoggerAttributeFilter>();
+            services.AddScoped<ActionLoggerFilterAttribute>();
 
             //add the custom services
             services.AddSingleton<IRuntimeCompilerService, RuntimeCompilerService>();

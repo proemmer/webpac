@@ -10,7 +10,8 @@ using webpac.Filters;
 
 namespace webpac.Controllers
 {
-    [ServiceFilter(typeof(ActionLoggerAttributeFilter))]
+    [ServiceFilter(typeof(ActionLoggerFilterAttribute))]
+    [ServiceFilter(typeof(WebPacExceptionFilterAttribute))]
     [Route("api/[controller]")]
     public class SymbolicController : Controller
     {
