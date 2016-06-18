@@ -15,14 +15,10 @@ namespace webpac.Controllers
     [Route("api/[controller]")]
     public class SymbolicController : Controller
     {
-        private readonly ILogger _logger;
         private readonly IMappingService _mappingService;
 
-        public SymbolicController(  IMappingService mappingService, 
-                                    ILoggerFactory loggerFactory,
-                                    ILogger<SymbolicController> logger) 
+        public SymbolicController(IMappingService mappingService) 
         {
-            _logger = logger;
             _mappingService = mappingService;
         }
 

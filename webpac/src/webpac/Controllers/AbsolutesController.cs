@@ -14,13 +14,10 @@ namespace webpac.Controllers
     [Route("api/[controller]")]
     public class AbsolutesController : Controller
     {
-        private readonly ILogger _logger;
         private readonly IMappingService _mappingService;
 
-        public AbsolutesController( IMappingService mappingService,
-                                    ILogger<AbsolutesController> logger) 
+        public AbsolutesController( IMappingService mappingService) 
         {
-            _logger = logger;
             _mappingService = mappingService;
         }
 
@@ -66,11 +63,11 @@ namespace webpac.Controllers
         [Authorize(Policy = "ReadOnlyPolicy")]
         public IActionResult Get(string area, [FromBody]params string[] addresses)
         {
-            if (string.IsNullOrWhiteSpace(area) || addresses != null || !addresses.Any())
+            if (string.IsNullOrWhiteSpace(area) || addresses == null || !addresses.Any())
                 return BadRequest();
 
             var red = _mappingService.ReadAbs(area, addresses);
-            if (red == null)
+            if (red == null || !red.Any())
                 return NotFound();
             return new ObjectResult(red);
         }

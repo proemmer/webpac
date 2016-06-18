@@ -39,7 +39,7 @@ namespace webpac.Services
         #region IService Interface
         public void Configure(IConfigurationSection config)
         {
-            _location = config.Get<string>("Location");
+            _location = config.Get<string>("Location","");
             _usings = config.Get<string[]>("Usings");
         }
 

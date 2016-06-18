@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Hubs;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using webpac.Interfaces;
@@ -71,6 +72,13 @@ namespace webpac.Hubs
         /// <returns></returns>
         public bool Subscribe(string mapping, params string[] variables)
         {
+            if (string.IsNullOrWhiteSpace(mapping))
+            {
+                _logger.LogError($"Client {Context.ConnectionId}: tries to subscribe to mapping with null value");
+                return false;
+            }
+            if (variables == null || !variables.Any())
+                variables = new string[] { "This" };
             _logger.LogInformation($"Client {Context.ConnectionId}: start subscription to mapping {mapping} and variables {variables.Aggregate((a,b) => $"{a},{b}")} ");
             return _mappingService.SubscribeChanges(Context.ConnectionId, mapping, variables);
         }
@@ -83,6 +91,13 @@ namespace webpac.Hubs
         /// <returns></returns>
         public bool Unsubscribe(string mapping, params string[] variables)
         {
+            if (string.IsNullOrWhiteSpace(mapping))
+            {
+                _logger.LogError($"Client {Context.ConnectionId}: tries to unsubscribe from mapping with null value");
+                return false;
+            }
+            if (variables == null || !variables.Any())
+                variables = new string[] { "This" };
             _logger.LogInformation($"Client {Context.ConnectionId}: stop subscription to mapping {mapping} and variables {variables.Aggregate((a, b) => $"{a},{b}")} ");
             return _mappingService.UnsubscribeChanges(Context.ConnectionId, mapping, variables);
         }
@@ -95,7 +110,17 @@ namespace webpac.Hubs
         /// <returns></returns>
         public bool SubscribeRaw(string area, params string[] adresses)
         {
-            _logger.LogInformation($"Client {Context.ConnectionId}: start subscription to area {area} and adresses {adresses.Aggregate((a, b) => $"{a},{b}")} ");
+            if (string.IsNullOrWhiteSpace(area))
+            {
+                _logger.LogError($"Client {Context.ConnectionId}: tries to subscribe to area with null value");
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(area))
+            {
+                _logger.LogError($"Client {Context.ConnectionId}: tries to subscribe to area {area} with null value in address");
+                return false;
+            }
+            _logger.LogInformation($"Client {Context.ConnectionId}: start subscription to area {area} and addresses {adresses.Aggregate((a, b) => $"{a},{b}")} ");
             return _mappingService.SubscribeRawChanges(Context.ConnectionId, area, adresses);
         }
 
@@ -107,6 +132,16 @@ namespace webpac.Hubs
         /// <returns></returns>
         public bool UnsubscribeRaw(string area, params string[] adresses)
         {
+            if (string.IsNullOrWhiteSpace(area))
+            {
+                _logger.LogError($"Client {Context.ConnectionId}: tries to unsubscribe from area with null value");
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(area))
+            {
+                _logger.LogError($"Client {Context.ConnectionId}: tries to unsubscribe from area {area} with null value in address");
+                return false;
+            }
             _logger.LogInformation($"Client {Context.ConnectionId}: stop subscription to area {area} and addresses {adresses.Aggregate((a, b) => $"{a},{b}")} ");
             return _mappingService.UnsubscribeRawChanges(Context.ConnectionId, area, adresses);
         }
