@@ -1,6 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 
-namespace webpac.Auth
+namespace Webpac.Auth
 {
     public class TokenAuthOptions
     {

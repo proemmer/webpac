@@ -1,4 +1,4 @@
-﻿namespace webpac.Models
+﻿namespace Webpac.Models
 {
     public enum UserType { ReadOnly, ReadWrite, Admin }
 

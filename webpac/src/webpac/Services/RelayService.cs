@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
-using webpac.Hubs;
-using webpac.Interfaces;
+using Webpac.Hubs;
+using Webpac.Interfaces;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 
-namespace webpac.Services
+namespace Webpac.Services
 {
 
     /// <summary>

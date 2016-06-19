@@ -6,11 +6,11 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Principal;
-using webpac.Auth;
-using webpac.Interfaces;
-using webpac.Models;
+using Webpac.Auth;
+using Webpac.Interfaces;
+using Webpac.Models;
 
-namespace webpac.Controllers
+namespace Webpac.Controllers
 {
     [Route("api/[controller]")]
     public class TokenController : Controller

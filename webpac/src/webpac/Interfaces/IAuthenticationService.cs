@@ -1,6 +1,6 @@
-﻿using webpac.Models;
+﻿using Webpac.Models;
 
-namespace webpac.Interfaces
+namespace Webpac.Interfaces
 {
     public interface IAuthenticationService : IService
     {

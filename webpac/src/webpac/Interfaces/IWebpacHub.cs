@@ -1,4 +1,4 @@
-﻿namespace webpac.Interfaces
+﻿namespace Webpac.Interfaces
 {
     /// <summary>
     /// Hub client interface

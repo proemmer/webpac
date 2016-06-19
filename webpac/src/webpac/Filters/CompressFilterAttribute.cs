@@ -2,7 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 
-namespace webpac.Filters
+namespace Webpac.Filters
 {
     public class CompressFilterAttribute : ActionFilterAttribute
     {

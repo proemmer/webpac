@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using webpac.Interfaces;
+using Webpac.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Net;
-using webpac.Filters;
+using Webpac.Filters;
 
-namespace webpac.Controllers
+namespace Webpac.Controllers
 {
     [ServiceFilter(typeof(ActionLoggerFilterAttribute))]
     [ServiceFilter(typeof(WebPacExceptionFilterAttribute))]

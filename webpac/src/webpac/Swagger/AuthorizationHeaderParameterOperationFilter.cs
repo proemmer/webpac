@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Swashbuckle.SwaggerGen.Generator;
 
-namespace webpac.Swagger
+namespace Webpac.Swagger
 {
     /// <summary>
     /// This Filter is an Extension for Swagger, to handle Bearer Token

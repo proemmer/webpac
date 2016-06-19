@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 
-namespace webpac.Filters
+namespace Webpac.Filters
 {
     /// <summary>
     /// https://damienbod.com/2015/09/15/asp-net-5-action-filters/

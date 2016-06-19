@@ -20,6 +20,8 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.AspNetCore.Signal
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "UnitTestSuit", "src\UnitTestSuit\UnitTestSuit.xproj", "{650A5A85-5956-491E-9312-5E25A27D1108}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "WebpacClient", "src\WebpacClient\WebpacClient.xproj", "{6157F55E-2931-4F17-9875-2E6C6104FE23}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{650A5A85-5956-491E-9312-5E25A27D1108}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{650A5A85-5956-491E-9312-5E25A27D1108}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{650A5A85-5956-491E-9312-5E25A27D1108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -56,5 +62,6 @@ Global
 		{1A8EEF26-BA42-496D-9CAE-722581F9777C} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
 		{1E7F548C-CB60-46A1-B431-D67825A32698} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
 		{650A5A85-5956-491E-9312-5E25A27D1108} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
+		{6157F55E-2931-4F17-9875-2E6C6104FE23} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
 	EndGlobalSection
 EndGlobal

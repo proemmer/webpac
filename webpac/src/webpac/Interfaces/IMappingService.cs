@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace webpac.Interfaces
+namespace Webpac.Interfaces
 {
     public delegate void OnDataChangeEventHandler(List<SubscriptionInformationPackage> package);
     public delegate void OnPlcConnectionChangeEventHandler(List<string> subscribers, bool state);

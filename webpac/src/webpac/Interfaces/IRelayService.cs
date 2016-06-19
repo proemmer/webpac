@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace webpac.Interfaces
+namespace Webpac.Interfaces
 {
     public interface IRelayService :  IService, IDisposable
     {

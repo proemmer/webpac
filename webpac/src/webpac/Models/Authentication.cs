@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace webpac.Models
+namespace Webpac.Models
 {
     public class Authentication
     {

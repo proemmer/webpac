@@ -3,16 +3,16 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using webpac.Interfaces;
-using webpac.Filters;
-using webpac.Services;
-using webpac.Auth;
-using webpac.Swagger;
+using Webpac.Interfaces;
+using Webpac.Filters;
+using Webpac.Services;
+using Webpac.Auth;
+using Webpac.Swagger;
 using System.IO;
 using System;
 using NLog.Extensions.Logging;
 
-namespace webpac
+namespace Webpac
 {
     public class Startup
     {

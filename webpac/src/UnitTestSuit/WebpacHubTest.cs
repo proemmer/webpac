@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Moq;
-using webpac.Hubs;
-using webpac.Interfaces;
+using Webpac.Hubs;
+using Webpac.Interfaces;
 using Xunit;
 using Microsoft.AspNetCore.SignalR.Hubs;
 

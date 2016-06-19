@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using webpac.Interfaces;
+using Webpac.Interfaces;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Text;
@@ -15,7 +15,7 @@ using Dacs7.Helper;
 using System.Runtime.Loader;
 using Microsoft.Extensions.Logging;
 
-namespace webpac.Services
+namespace Webpac.Services
 {
     public class RuntimeCompilerService : IRuntimeCompilerService
     {

@@ -9,7 +9,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 
-namespace webpac.Auth
+namespace Webpac.Auth
 {
     public static class WebPacAuth
     {

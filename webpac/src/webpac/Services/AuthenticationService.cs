@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
-using webpac.Interfaces;
-using webpac.Models;
+using Webpac.Interfaces;
+using Webpac.Models;
 
-namespace webpac.Services
+namespace Webpac.Services
 {
     public class AuthenticationService : IAuthenticationService
     {

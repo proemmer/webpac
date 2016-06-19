@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace webpac.Interfaces
+namespace Webpac.Interfaces
 {
     /// <summary>
     /// Service interface

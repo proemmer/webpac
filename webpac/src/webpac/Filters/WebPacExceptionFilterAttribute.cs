@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 
-namespace webpac.Filters
+namespace Webpac.Filters
 {
     public class WebPacExceptionFilterAttribute : ExceptionFilterAttribute
     {

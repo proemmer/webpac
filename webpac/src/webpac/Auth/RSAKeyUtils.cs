@@ -2,7 +2,7 @@
 using System.IO;
 using System.Security.Cryptography;
 
-namespace webpac.Auth
+namespace Webpac.Auth
 {
     public class RSAKeyUtils
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace webpac.Interfaces
+namespace Webpac.Interfaces
 {
     /// <summary>
     /// Interface for runtime compiler service to get the dynamic compiled types

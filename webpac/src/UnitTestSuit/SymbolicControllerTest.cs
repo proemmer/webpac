@@ -1,8 +1,8 @@
 ﻿using Moq;
 using System.Collections.Generic;
 using System.Linq;
-using webpac.Controllers;
-using webpac.Interfaces;
+using Webpac.Controllers;
+using Webpac.Interfaces;
 using Xunit;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;

@@ -26,7 +26,8 @@
     "Swashbuckle": "6.0.0-beta9",
     "System.IO.Compression": "4.1.0-rc3-24206-00",
     "Microsoft.AspNetCore.WebSockets.Server": "0.1.0-rc2-final",
-    "NLog.Extensions.Logging": "1.0.0-rc2-final-2016-05-21"
+    "NLog.Extensions.Logging": "1.0.0-rc2-final-2016-05-21",
+    "autorest": "0.16.0"
   },
 
   "tools": {

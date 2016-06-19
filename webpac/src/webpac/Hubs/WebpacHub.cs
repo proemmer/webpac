@@ -4,12 +4,12 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using webpac.Interfaces;
+using Webpac.Interfaces;
 
 /// <summary>
 /// https://github.com/aspnet/SignalR-Server/blob/dev/samples/SignalRSample.Web/Hubs/DemoHub.cs
 /// </summary>
-namespace webpac.Hubs
+namespace Webpac.Hubs
 {
     [HubName("webpac")]
     [Authorize(Roles = "ReadOnly,ReadWrite,Admin")]

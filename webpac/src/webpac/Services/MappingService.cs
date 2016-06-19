@@ -13,9 +13,9 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using webpac.Interfaces;
+using Webpac.Interfaces;
 
-namespace webpac.Services
+namespace Webpac.Services
 {
     /// <summary>
     /// This service handles the connection to the plc

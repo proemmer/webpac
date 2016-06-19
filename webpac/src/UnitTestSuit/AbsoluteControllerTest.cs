@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using webpac.Controllers;
-using webpac.Interfaces;
+using Webpac.Controllers;
+using Webpac.Interfaces;
 using Xunit;
 
 namespace UnitTestSuit

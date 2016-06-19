@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace webpac.Services
+namespace Webpac.Services
 {
     internal class PlcConnectionException : Exception
     {

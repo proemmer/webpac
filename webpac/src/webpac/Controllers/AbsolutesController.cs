@@ -4,10 +4,10 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using webpac.Filters;
-using webpac.Interfaces;
+using Webpac.Filters;
+using Webpac.Interfaces;
 
-namespace webpac.Controllers
+namespace Webpac.Controllers
 {
     [ServiceFilter(typeof(ActionLoggerFilterAttribute))]
     [ServiceFilter(typeof(WebPacExceptionFilterAttribute))]
