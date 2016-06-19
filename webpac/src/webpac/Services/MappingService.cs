@@ -1,6 +1,5 @@
 ﻿using Dacs7;
 using Dacs7.Domain;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Papper;

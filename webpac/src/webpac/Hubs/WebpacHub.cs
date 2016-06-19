@@ -11,10 +11,8 @@ using webpac.Interfaces;
 /// </summary>
 namespace webpac.Hubs
 {
-    /// <summary>
-    /// We do not use authorization for this hub because this force longpolling!!
-    /// </summary>
     [HubName("webpac")]
+    [Authorize(Roles = "ReadOnly,ReadWrite,Admin")]
     public class WebpacHub : Hub<IWebpacClient>
     {
         private IMappingService _mappingService;

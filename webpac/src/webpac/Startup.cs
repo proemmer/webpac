@@ -10,6 +10,7 @@ using webpac.Auth;
 using webpac.Swagger;
 using System.IO;
 using System;
+using NLog.Extensions.Logging;
 
 namespace webpac
 {
@@ -53,7 +54,6 @@ namespace webpac
             // Add framework services.
             services.AddMvc();
 
-
             //add and configure swagger
             services.AddSwaggerGen();
             services.ConfigureSwaggerGen(options =>
@@ -67,8 +67,9 @@ namespace webpac
                 options.OperationFilter<AuthorizationHeaderParameterOperationFilter>();
             });
 
-            //add filter to log Actions
+            //add filters
             services.AddScoped<ActionLoggerFilterAttribute>();
+            services.AddScoped<WebPacExceptionFilterAttribute>();
 
             //add the custom services
             services.AddSingleton<IRuntimeCompilerService, RuntimeCompilerService>();
@@ -95,11 +96,18 @@ namespace webpac
                                 IMappingService mappingService,
                                 IRuntimeCompilerService runtimeCompilerService,
                                 IAuthenticationService authService,
-                                IRelayService serviceHubConnector
+                                IRelayService relayService
             )
         {
+            var globalConfig = Configuration.GetSection("Global");
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            if (globalConfig.Get("UseLogFiles", true))
+            {
+                loggerFactory.AddNLog();
+                env.ConfigureNLog("nlog.config");
+            }
 
             runtimeCompilerService.Configure(Configuration.GetSection("RuntimeCompiler"));
             runtimeCompilerService.Init();
@@ -109,8 +117,6 @@ namespace webpac
 
             authService.Configure(Configuration.GetSection("Auth"));
             authService.Init();
-
-            serviceHubConnector.Init();
 
             app.UseWebPackAuth();
 
@@ -124,18 +130,26 @@ namespace webpac
 
 
             if (env.IsDevelopment())
-            {
-                //app.UseRuntimeInfoPage(); // default path is /runtimeinfo
                 app.UseDeveloperExceptionPage();
+
+            
+            if (globalConfig.Get("UseSignalR", true))
+            {
+                relayService.Init();
+
+                if ( globalConfig.Get("UseWebSockets", true))
+                    app.UseWebSockets();
+                app.UseSignalR();
             }
 
-            //app.UseWebSockets();
-            app.UseSignalR();
 
             app.UseMvc();
 
-            app.UseSwaggerGen();
-            app.UseSwaggerUi();
+            if (globalConfig.Get("UseSwagger", true))
+            {
+                app.UseSwaggerGen();
+                app.UseSwaggerUi();
+            }
         }
 
     }

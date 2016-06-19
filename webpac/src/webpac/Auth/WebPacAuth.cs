@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 
@@ -64,12 +65,31 @@ namespace webpac.Auth
 
         public static void UseWebPackAuth(this IApplicationBuilder app)
         {
+            //this is needed to support Authorization via query string or SignalR
+            app.Use(async (context, next) =>
+            {
+                if (string.IsNullOrWhiteSpace(context.Request.Headers["Authorization"]) && context.Request.QueryString.HasValue)
+                {
+                    var token = context.Request.QueryString.Value
+                        .Split('&')
+                        .SingleOrDefault(x => x.Contains("BearerToken"))?.Split('=')[1];
+
+                    if (!string.IsNullOrWhiteSpace(token))
+                        context.Request.Headers.Add("Authorization", new[] { $"Bearer {token}" });
+                }
+                await next.Invoke();
+            });
+
+
             app.UseJwtBearerAuthentication(GetBearerOptions());
         }
 
         private static JwtBearerOptions GetBearerOptions()
         {
             var options = new JwtBearerOptions();
+
+            options.AutomaticAuthenticate = true;
+            options.AutomaticChallenge = true;
 
             // Basic settings - signing key to validate with, audience and issuer.
             options.TokenValidationParameters.IssuerSigningKey = _key;
