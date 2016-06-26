@@ -1,6 +1,6 @@
-# webpac
-Access plc over web api
+#![Logo](https://github.com/proemmer/webpac-docs/icons/logo.jpg) webpac#
 
-
-# links
-http://dotnet.github.io/docs/core-concepts/dnx-migration.html?Wt.mc_id=DX_MVP8656
+- [Documentation](https://github.com/proemmer/webpac-docs)
+- [Release Notes](https://github.com/proemmer/webpac/releases)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [License](LICENSE.md)
