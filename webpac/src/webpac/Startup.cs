@@ -11,6 +11,8 @@ using Webpac.Swagger;
 using System.IO;
 using System;
 using NLog.Extensions.Logging;
+using NLog;
+using NLog.Config;
 
 namespace Webpac
 {
@@ -106,7 +108,9 @@ namespace Webpac
             if (globalConfig.Get("UseLogFiles", true))
             {
                 loggerFactory.AddNLog();
-                env.ConfigureNLog("nlog.config");
+
+                //env.ConfigureNLog("nlog.config");  // <- Throws ArgumentNullException in productive environment
+                LogManager.Configuration = new XmlLoggingConfiguration("nlog.config", true);  // <- Workaround for ArgumentNullException 
             }
 
             runtimeCompilerService.Configure(Configuration.GetSection("RuntimeCompiler"));
