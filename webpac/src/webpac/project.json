@@ -1,4 +1,6 @@
 {
+  "version": "1.0.0-beta1",
+  "description": "web based structural access to plc - web plc data access",
   "dependencies": {
     "Microsoft.NETCore.App": {
       "version": "1.0.0-rc2-3002702",
