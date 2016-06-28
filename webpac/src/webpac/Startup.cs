@@ -13,6 +13,7 @@ using System;
 using NLog.Extensions.Logging;
 using NLog;
 using NLog.Config;
+using Newtonsoft.Json.Serialization;
 
 namespace Webpac
 {
@@ -54,20 +55,23 @@ namespace Webpac
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
-            services.AddMvc();
+            services.AddMvc()
+                    .AddJsonOptions(options => options.SerializerSettings.ContractResolver = new DefaultContractResolver());
 
             //add and configure swagger
-            services.AddSwaggerGen();
-            services.ConfigureSwaggerGen(options =>
-            {
-                options.SingleApiVersion(new Swashbuckle.SwaggerGen.Generator.Info
-                {
-                    Version = "v1",
-                    Title = "webpac",
-                    Description = "a api to access plc data in a structured way"
-                });
-                options.OperationFilter<AuthorizationHeaderParameterOperationFilter>();
-            });
+
+            //Not supported at the moment
+            //services.AddSwaggerGen();
+            //services.ConfigureSwaggerGen(options =>
+            //{
+            //    options.SingleApiVersion(new Swashbuckle.SwaggerGen.Generator.Info
+            //    {
+            //        Version = "v1",
+            //        Title = "webpac",
+            //        Description = "a api to access plc data in a structured way"
+            //    });
+            //    options.OperationFilter<AuthorizationHeaderParameterOperationFilter>();
+            //});
 
             //add filters
             services.AddScoped<ActionLoggerFilterAttribute>();
@@ -80,7 +84,7 @@ namespace Webpac
             services.AddSingleton<IRelayService, RelayService>();
 
             //configure the webpac auth
-            services.AddWebPacAuthentication(Configuration.GetSection("Auth")?.Get<string>("KeyFile"));
+            services.AddWebPacAuthentication(Configuration.GetSection("Auth")?.GetValue<string>("KeyFile"));
 
             //add signal r usage
             services.AddSignalR(options =>
@@ -105,7 +109,7 @@ namespace Webpac
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            if (globalConfig.Get("UseLogFiles", true))
+            if (globalConfig.GetValue("UseLogFiles", true))
             {
                 loggerFactory.AddNLog();
 
@@ -137,11 +141,11 @@ namespace Webpac
                 app.UseDeveloperExceptionPage();
 
             
-            if (globalConfig.Get("UseSignalR", true))
+            if (globalConfig.GetValue("UseSignalR", true))
             {
                 relayService.Init();
 
-                if ( globalConfig.Get("UseWebSockets", true))
+                if ( globalConfig.GetValue("UseWebSockets", true))
                     app.UseWebSockets();
                 app.UseSignalR();
             }
@@ -149,11 +153,12 @@ namespace Webpac
 
             app.UseMvc();
 
-            if (globalConfig.Get("UseSwagger", true))
-            {
-                app.UseSwaggerGen();
-                app.UseSwaggerUi();
-            }
+            //Not supported at the moment
+            //if (globalConfig.GetValue("UseSwagger", true))
+            //{
+            //    app.UseSwaggerGen();
+            //    app.UseSwaggerUi();
+            //}
         }
 
     }

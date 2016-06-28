@@ -1,6 +1,4 @@
 ﻿using System;
-using Webpac.Client;
-using Webpac.Client.Models;
 
 namespace WebpacClient
 {
@@ -14,24 +12,24 @@ namespace WebpacClient
         /// <param name="args"></param>
         public static void Main(string[] args)
         {
-            var client = new WebPacClient();
-            client.BaseUri = new Uri("http://localhost:5000");
-            var authReq = new AuthRequest("ReadWriteUsername", "ReadWritePassword");
+            //var client = new WebPacClient();
+            //client.BaseUri = new Uri("http://localhost:5000");
+            //var authReq = new AuthRequest("ReadWriteUsername", "ReadWritePassword");
 
-            Console.WriteLine("Authentication...");
-            var auth = client.ApiTokenPost(authReq);
-            if ((bool)auth.Authenticated)
-            {
-                Console.WriteLine("...Authenticated");
-                var autorization = $"Bearer {auth.Token}";
+            //Console.WriteLine("Authentication...");
+            //var auth = client.ApiTokenPost(authReq);
+            //if ((bool)auth.Authenticated)
+            //{
+            //    Console.WriteLine("...Authenticated");
+            //    var autorization = $"Bearer {auth.Token}";
 
-                Console.WriteLine("Call Get on Symbolic Controller...");
-                foreach (var item in client.ApiSymbolicGet(autorization))
-                    Console.WriteLine($"{item}");
-                Console.WriteLine("-- finished");
-            }
-            else
-                Console.WriteLine("Not Authenticated!");
+            //    Console.WriteLine("Call Get on Symbolic Controller...");
+            //    foreach (var item in client.ApiSymbolicGet(autorization))
+            //        Console.WriteLine($"{item}");
+            //    Console.WriteLine("-- finished");
+            //}
+            //else
+            //    Console.WriteLine("Not Authenticated!");
 
         }
     }

@@ -24,7 +24,7 @@ namespace Webpac.Services
         private readonly List<Type> _resolvedTypes = new List<Type>();
         private readonly AssemblyLoadContext _context;
         private readonly DependencyContext _depContext;
-        private string[] _usings;
+        private IEnumerable<string> _usings;
         private string _location;
         private readonly ConcurrentDictionary<string, AssemblyMetadata> _metadataFileCache =new ConcurrentDictionary<string, AssemblyMetadata>(StringComparer.OrdinalIgnoreCase);
 
@@ -39,8 +39,9 @@ namespace Webpac.Services
         #region IService Interface
         public void Configure(IConfigurationSection config)
         {
-            _location = config.Get<string>("Location","");
-            _usings = config.Get<string[]>("Usings");
+            _location = config.GetValue("Location",string.Empty);
+            _usings = new List<string>();
+            config.GetSection("Usings").Bind(_usings);
         }
 
         public void Init()

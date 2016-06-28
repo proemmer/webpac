@@ -113,7 +113,7 @@ namespace Webpac.Hubs
                 _logger.LogError($"Client {Context.ConnectionId}: tries to subscribe to area with null value");
                 return false;
             }
-            if (string.IsNullOrWhiteSpace(area))
+            if (string.IsNullOrWhiteSpace(area) || !adresses.Any())
             {
                 _logger.LogError($"Client {Context.ConnectionId}: tries to subscribe to area {area} with null value in address");
                 return false;
@@ -135,7 +135,7 @@ namespace Webpac.Hubs
                 _logger.LogError($"Client {Context.ConnectionId}: tries to unsubscribe from area with null value");
                 return false;
             }
-            if (string.IsNullOrWhiteSpace(area))
+            if (string.IsNullOrWhiteSpace(area) || !adresses.Any())
             {
                 _logger.LogError($"Client {Context.ConnectionId}: tries to unsubscribe from area {area} with null value in address");
                 return false;

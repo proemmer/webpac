@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Webpac.Interfaces;
 using Webpac.Models;
@@ -13,8 +14,9 @@ namespace Webpac.Services
 
         public void Configure(IConfigurationSection config)
         {
-            users = config.Get<User[]>("Users");
-            ValidationTimeInMin = config.Get<int>("TokenValidatenTimeinMinutes");
+            users = new List<User>();
+            config.GetSection("Users").Bind(users);
+            ValidationTimeInMin = config.GetValue<int>("TokenValidatenTimeinMinutes");
         }
 
         public void Init()

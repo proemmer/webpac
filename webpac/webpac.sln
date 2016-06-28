@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{57839817-2780-49FB-9AC0-A2EC9F77035F}"
 EndProject
@@ -12,15 +12,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "webpac", "src\webpac\webpac.xproj", "{C68D8468-2886-4026-AF49-42486AE4F05F}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "UnitTestSuit", "src\UnitTestSuit\UnitTestSuit.xproj", "{650A5A85-5956-491E-9312-5E25A27D1108}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "WebpacClient", "src\WebpacClient\WebpacClient.xproj", "{6157F55E-2931-4F17-9875-2E6C6104FE23}"
+EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.AspNetCore.SignalR.Sources", "src\Microsoft.AspNetCore.SignalR.Sources\Microsoft.AspNetCore.SignalR.Sources.xproj", "{C41C7A05-ADC3-4771-8F8D-18B86CE7FACC}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.AspNetCore.SignalR.Messaging", "src\Microsoft.AspNetCore.SignalR.Messaging\Microsoft.AspNetCore.SignalR.Messaging.xproj", "{1A8EEF26-BA42-496D-9CAE-722581F9777C}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.AspNetCore.SignalR.Server", "src\Microsoft.AspNetCore.SignalR.Server\Microsoft.AspNetCore.SignalR.Server.xproj", "{1E7F548C-CB60-46A1-B431-D67825A32698}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "UnitTestSuit", "src\UnitTestSuit\UnitTestSuit.xproj", "{650A5A85-5956-491E-9312-5E25A27D1108}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "WebpacClient", "src\WebpacClient\WebpacClient.xproj", "{6157F55E-2931-4F17-9875-2E6C6104FE23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +32,14 @@ Global
 		{C68D8468-2886-4026-AF49-42486AE4F05F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C68D8468-2886-4026-AF49-42486AE4F05F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C68D8468-2886-4026-AF49-42486AE4F05F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{650A5A85-5956-491E-9312-5E25A27D1108}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{650A5A85-5956-491E-9312-5E25A27D1108}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{650A5A85-5956-491E-9312-5E25A27D1108}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{650A5A85-5956-491E-9312-5E25A27D1108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C41C7A05-ADC3-4771-8F8D-18B86CE7FACC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C41C7A05-ADC3-4771-8F8D-18B86CE7FACC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C41C7A05-ADC3-4771-8F8D-18B86CE7FACC}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -44,24 +52,16 @@ Global
 		{1E7F548C-CB60-46A1-B431-D67825A32698}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E7F548C-CB60-46A1-B431-D67825A32698}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E7F548C-CB60-46A1-B431-D67825A32698}.Release|Any CPU.Build.0 = Release|Any CPU
-		{650A5A85-5956-491E-9312-5E25A27D1108}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{650A5A85-5956-491E-9312-5E25A27D1108}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{650A5A85-5956-491E-9312-5E25A27D1108}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{650A5A85-5956-491E-9312-5E25A27D1108}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6157F55E-2931-4F17-9875-2E6C6104FE23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C68D8468-2886-4026-AF49-42486AE4F05F} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
+		{650A5A85-5956-491E-9312-5E25A27D1108} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
+		{6157F55E-2931-4F17-9875-2E6C6104FE23} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
 		{C41C7A05-ADC3-4771-8F8D-18B86CE7FACC} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
 		{1A8EEF26-BA42-496D-9CAE-722581F9777C} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
 		{1E7F548C-CB60-46A1-B431-D67825A32698} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
-		{650A5A85-5956-491E-9312-5E25A27D1108} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
-		{6157F55E-2931-4F17-9875-2E6C6104FE23} = {57839817-2780-49FB-9AC0-A2EC9F77035F}
 	EndGlobalSection
 EndGlobal

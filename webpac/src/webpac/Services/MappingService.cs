@@ -304,10 +304,10 @@ namespace Webpac.Services
         #region IService Interface
         public void Configure(IConfigurationSection config)
         {
-            _connectionString = config.Get<string>("ConnectionString");
-            _connectOnStartup = config.Get<bool>("ConnectOnStartup");
-            _reconnectOnConnectionLost = config.Get<bool>("ReconnectOnConnectionLost");
-            _reconnectIntervall = config.Get<int>("ReconnectIntervall");
+            _connectionString = config.GetValue<string>("ConnectionString");
+            _connectOnStartup = config.GetValue<bool>("ConnectOnStartup");
+            _reconnectOnConnectionLost = config.GetValue<bool>("ReconnectOnConnectionLost");
+            _reconnectIntervall = config.GetValue<int>("ReconnectIntervall");
         }
 
         public void Init()
