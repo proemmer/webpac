@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Swashbuckle.SwaggerGen.Generator;
+using Swashbuckle.Swagger.Model;
 
 namespace Webpac.Swagger
 {

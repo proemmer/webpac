@@ -61,17 +61,17 @@ namespace Webpac
             //add and configure swagger
 
             //Not supported at the moment
-            //services.AddSwaggerGen();
-            //services.ConfigureSwaggerGen(options =>
-            //{
-            //    options.SingleApiVersion(new Swashbuckle.SwaggerGen.Generator.Info
-            //    {
-            //        Version = "v1",
-            //        Title = "webpac",
-            //        Description = "a api to access plc data in a structured way"
-            //    });
-            //    options.OperationFilter<AuthorizationHeaderParameterOperationFilter>();
-            //});
+            services.AddSwaggerGen();
+            services.ConfigureSwaggerGen(options =>
+            {
+                //options.SingleApiVersion(new Swashbuckle.SwaggerGen.Generator.Info
+                //{
+                //    Version = "v1",
+                //    Title = "webpac",
+                //    Description = "a api to access plc data in a structured way"
+                //});
+                options.OperationFilter<AuthorizationHeaderParameterOperationFilter>();
+            });
 
             //add filters
             services.AddScoped<ActionLoggerFilterAttribute>();
@@ -113,8 +113,8 @@ namespace Webpac
             {
                 loggerFactory.AddNLog();
 
-                //env.ConfigureNLog("nlog.config");  // <- Throws ArgumentNullException in productive environment
-                LogManager.Configuration = new XmlLoggingConfiguration("nlog.config", true);  // <- Workaround for ArgumentNullException 
+                env.ConfigureNLog("nlog.config");  // <- Throws ArgumentNullException in productive environment
+                //LogManager.Configuration = new XmlLoggingConfiguration("nlog.config", true);  // <- Workaround for ArgumentNullException 
             }
 
             runtimeCompilerService.Configure(Configuration.GetSection("RuntimeCompiler"));

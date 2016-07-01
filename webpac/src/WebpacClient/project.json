@@ -9,7 +9,7 @@
       "version": "1.0.0",
       "type": "platform"
     },
-    "Microsoft.Rest.ClientRuntime": "2.3.0",
+    "Microsoft.Rest.ClientRuntime": "2.3.1",
     "System.Runtime.Serialization.Primitives": "4.1.1"
   },
 
