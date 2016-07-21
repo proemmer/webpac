@@ -30,7 +30,7 @@
     "Papper": "1.0.3",
     "NLog.Extensions.Logging": "1.0.0-rtm-alpha2",
     "Swashbuckle": "6.0.0-beta901",
-    "Dacs7": "1.0.3"
+    "Dacs7": "1.0.4"
   },
 
   "tools": {
