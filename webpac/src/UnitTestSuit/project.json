@@ -13,7 +13,7 @@
       "version": "1.0.0",
       "type": "platform"
     },
-    "Moq": "4.6.25-alpha",
+    "Moq": "4.6.36-alpha",
     "NETStandard.Library": "1.6.0",
     "System.Diagnostics.TraceSource": "4.0.0",
     "System.Linq": "4.1.0",

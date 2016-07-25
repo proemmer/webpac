@@ -154,11 +154,11 @@ namespace Webpac
             app.UseMvc();
 
             //Not supported at the moment
-            //if (globalConfig.GetValue("UseSwagger", true))
-            //{
-            //    app.UseSwaggerGen();
-            //    app.UseSwaggerUi();
-            //}
+            if (globalConfig.GetValue("UseSwagger", true))
+            {
+                app.UseSwagger();
+                app.UseSwaggerUi();
+            }
         }
 
     }
