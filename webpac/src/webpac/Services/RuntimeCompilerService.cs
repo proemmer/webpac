@@ -32,7 +32,7 @@ namespace Webpac.Services
         public RuntimeCompilerService(ILogger<RuntimeCompilerService> logger)
         {
             _logger = logger;
-            _context = AssemblyLoadContext.GetLoadContext(Assembly.GetEntryAssembly());
+            _context = AssemblyLoadContext.Default;
             _depContext = DependencyContext.Default;
         }
 

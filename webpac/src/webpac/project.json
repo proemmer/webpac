@@ -3,7 +3,7 @@
   "description": "web based structural access to plc - web plc data access",
   "dependencies": {
     "Microsoft.NETCore.App": {
-      "version": "1.0.0",
+      "version": "1.0.1",
       "type": "platform"
     },
     "autorest": "0.16.0",
